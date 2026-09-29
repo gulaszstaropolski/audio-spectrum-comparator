@@ -58,6 +58,12 @@ export function downloadChart(chartId: string, format: "png" | "svg"): void {
 // manually into the plugin.
 export type EqPresetFormat = "fabfilter" | "presonus";
 
+// Fixed filenames (no timestamp) as specified for these exports. Repeated
+// downloads of the same format will get "(1)", "(2)", etc. appended by the
+// browser, which is expected/acceptable here since each file's content is
+// re-derived from the current analysis at download time (see
+// downloadEqPreset below), not a versioned artifact that needs distinct
+// timestamped names to avoid data loss.
 const EQ_PRESET_FILE_INFO: Record<EqPresetFormat, string> = {
   fabfilter: "eq-correction-fabfilter-instructions.txt",
   presonus: "eq-correction-presonus.txt",

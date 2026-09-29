@@ -16,12 +16,22 @@ export default function CorrectionChart({
 }) {
   const names = corrections.map((band) => band.name);
   const gains = corrections.map((band) => band.correctionDb);
-  const customdata = corrections.map((band) => [
-    band.center,
-    band.q,
-    band.eqType,
-    band.bypass ? "Bypassed" : "Active",
-  ]);
+  // Positional indices used by the hovertemplate below — plotly.js only
+  // supports "%{customdata[N]}" array access in hovertemplate strings, not
+  // "%{customdata.fieldName}" object property access, so we document the
+  // index -> field mapping here explicitly instead of using "magic numbers".
+  const CUSTOMDATA_FREQUENCY = 0;
+  const CUSTOMDATA_Q = 1;
+  const CUSTOMDATA_TYPE = 2;
+  const CUSTOMDATA_STATE = 3;
+  const customdata = corrections.map((band) => {
+    const row: (number | string)[] = [];
+    row[CUSTOMDATA_FREQUENCY] = band.center;
+    row[CUSTOMDATA_Q] = band.q;
+    row[CUSTOMDATA_TYPE] = band.eqType;
+    row[CUSTOMDATA_STATE] = band.bypass ? "Bypassed" : "Active";
+    return row;
+  });
   // Exact correction points (frequency + gain + Q), shown as markers on top
   // of the bars so the graph communicates the specific band settings that
   // will be entered in the EQ plugin, not just the "from-to" band range.
@@ -44,8 +54,8 @@ export default function CorrectionChart({
             cliponaxis: false,
             customdata,
             hovertemplate:
-              "<b>%{x}</b><br>Frequency: %{customdata[0]} Hz<br>Correction: %{y:+.2f} dB<br>" +
-              "Q: %{customdata[1]}<br>Type: %{customdata[2]}<br>%{customdata[3]}<extra></extra>",
+              `<b>%{x}</b><br>Frequency: %{customdata[${CUSTOMDATA_FREQUENCY}]} Hz<br>Correction: %{y:+.2f} dB<br>` +
+              `Q: %{customdata[${CUSTOMDATA_Q}]}<br>Type: %{customdata[${CUSTOMDATA_TYPE}]}<br>%{customdata[${CUSTOMDATA_STATE}]}<extra></extra>`,
           },
           {
             type: "scatter",
