@@ -1,5 +1,5 @@
 import Plotly from "../plotly";
-import type { AnalysisResult, EqCorrectionBand } from "../types/audio";
+import type { AnalysisResult, EqCorrectionBand, EqType } from "../types/audio";
 import { EXTREME_CORRECTION_DB } from "./frequencyBands";
 
 function csvCell(value: string | number): string {
@@ -121,6 +121,7 @@ type VstPresetLabels = {
   instructions: string;
   qLabel: string;
   typeLabel: string;
+  typeNames: Record<EqType, string>;
   bypassLabel: string;
   bypassOn: string;
   bypassOff: string;
@@ -140,12 +141,26 @@ function buildVstPreset(bands: EqCorrectionBand[], labels: VstPresetLabels): str
     const warning = band.exceedsThreshold ? `  [!] exceeds ±${EXTREME_CORRECTION_DB} dB` : "";
     lines.push(
       `Band ${index + 1} (${band.name}): Frequency = ${band.center} Hz | Gain = ${gain} | ` +
-        `${labels.qLabel} = ${band.q.toFixed(2)} | ${labels.typeLabel} = Bell | ` +
+        `${labels.qLabel} = ${band.q.toFixed(2)} | ${labels.typeLabel} = ${labels.typeNames[band.eqType]} | ` +
         `${labels.bypassLabel} = ${band.bypass ? labels.bypassOn : labels.bypassOff}${warning}`,
     );
   });
   return lines.join("\r\n");
 }
+
+const FABFILTER_TYPE_NAMES: Record<EqType, string> = {
+  Peaking: "Bell",
+  LowShelf: "Low Shelf",
+  HighShelf: "High Shelf",
+  Notch: "Notch",
+};
+
+const PRESONUS_TYPE_NAMES: Record<EqType, string> = {
+  Peaking: "Bell",
+  LowShelf: "Shelf (Low)",
+  HighShelf: "Shelf (High)",
+  Notch: "Notch",
+};
 
 function buildFabFilterPreset(bands: EqCorrectionBand[]): string {
   return buildVstPreset(bands, {
@@ -154,6 +169,7 @@ function buildFabFilterPreset(bands: EqCorrectionBand[]): string {
       "For each band below: add a band in Pro-Q 3, then set Frequency, Gain, Q and Shape to the values shown.",
     qLabel: "Q",
     typeLabel: "Shape",
+    typeNames: FABFILTER_TYPE_NAMES,
     bypassLabel: "Bypass",
     bypassOn: "On",
     bypassOff: "Off",
@@ -167,6 +183,7 @@ function buildPresonusPreset(bands: EqCorrectionBand[]): string {
       "For each band below: add/select a band in Pro EQ, then set Frequency, Gain, Bandwidth (Q) and Type to the values shown.",
     qLabel: "Bandwidth (Q)",
     typeLabel: "Type",
+    typeNames: PRESONUS_TYPE_NAMES,
     bypassLabel: "Band On",
     bypassOn: "No",
     bypassOff: "Yes",

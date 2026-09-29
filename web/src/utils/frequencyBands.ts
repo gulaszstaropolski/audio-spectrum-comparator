@@ -21,6 +21,7 @@ export const FREQUENCY_BANDS = [
   { name: "Bass", range: "60–250 Hz", low: 60, high: 250, center: 100, q: 0.8, eqType: "Peaking" },
   // Q 1.0 — moderate: balances warmth control with precision.
   { name: "Low-Mid", range: "250–500 Hz", low: 250, high: 500, center: 350, q: 1.0, eqType: "Peaking" },
+  // Q 1.2 — moderate-narrow: keeps vocal/instrument fundamentals precise.
   { name: "Mid", range: "500 Hz–2 kHz", low: 500, high: 2000, center: 1000, q: 1.2, eqType: "Peaking" },
   // Q 1.5 — narrower: targets harshness/presence without affecting neighbors.
   { name: "Upper-Mid", range: "2–4 kHz", low: 2000, high: 4000, center: 3000, q: 1.5, eqType: "Peaking" },
