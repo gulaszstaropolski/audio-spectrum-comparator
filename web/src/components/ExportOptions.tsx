@@ -30,12 +30,31 @@ export default function ExportOptions({
           <select
             className="session-select"
             aria-label="EQ preset format"
+            title="Choose the export format for the EQ correction preset"
             value={eqFormat}
             onChange={(event) => setEqFormat(event.target.value as EqPresetFormat)}
           >
-            <option value="json">JSON</option>
-            <option value="txt">TXT</option>
-            <option value="csv">CSV</option>
+            <option value="json" title="Generic JSON preset with all band data">
+              Generic JSON
+            </option>
+            <option value="txt" title="Generic human-readable text preset">
+              Generic TXT
+            </option>
+            <option value="csv" title="Generic CSV spreadsheet of band data">
+              Generic CSV
+            </option>
+            <option
+              value="fabfilter"
+              title="FabFilter Pro-Q 3 readable preset (.txt) with Band1, Band2, ... and 100% mix"
+            >
+              FabFilter Pro-Q 3
+            </option>
+            <option
+              value="presonus"
+              title="PreSonus Pro EQ preset (.txt) compatible with Studio One"
+            >
+              PreSonus Pro EQ
+            </option>
           </select>
           <button
             className="button button-primary"
