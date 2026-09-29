@@ -26,6 +26,17 @@ function colorForGain(gain: number): string {
   return gain >= 0 ? "#4caf6a" : "#ee685d";
 }
 
+// Positional indices used by the hovertemplate below — plotly.js only
+// supports "%{customdata[N]}" array access in hovertemplate strings, not
+// "%{customdata.fieldName}" object property access, so we document the
+// index -> field mapping here explicitly instead of using "magic numbers".
+// Defined at module scope since these are fixed constants unrelated to props.
+const CUSTOMDATA_FREQUENCY = 0;
+const CUSTOMDATA_Q = 1;
+const CUSTOMDATA_TYPE = 2;
+const CUSTOMDATA_STATE = 3;
+const CUSTOMDATA_RANGE = 4;
+
 export default function CorrectionChart({
   corrections,
 }: {
@@ -33,15 +44,6 @@ export default function CorrectionChart({
 }) {
   const names = corrections.map((band) => band.name);
   const gains = corrections.map((band) => band.correctionDb);
-  // Positional indices used by the hovertemplate below — plotly.js only
-  // supports "%{customdata[N]}" array access in hovertemplate strings, not
-  // "%{customdata.fieldName}" object property access, so we document the
-  // index -> field mapping here explicitly instead of using "magic numbers".
-  const CUSTOMDATA_FREQUENCY = 0;
-  const CUSTOMDATA_Q = 1;
-  const CUSTOMDATA_TYPE = 2;
-  const CUSTOMDATA_STATE = 3;
-  const CUSTOMDATA_RANGE = 4;
   const customdata: (number | string)[][] = corrections.map((band) => [
     band.center,
     band.q.toFixed(2),
@@ -53,7 +55,7 @@ export default function CorrectionChart({
   // of the bars so the graph communicates the specific band settings that
   // will be entered in the EQ plugin, not just the "from-to" band range.
   const pointLabels = corrections.map(
-    (band) => `${formatHz(band.center)}Hz · Q${band.q.toFixed(1)}`,
+    (band) => `${formatHz(band.center)}Hz · Q${band.q.toFixed(2)}`,
   );
   return (
     <div className="chart-frame" id="correction-chart">
