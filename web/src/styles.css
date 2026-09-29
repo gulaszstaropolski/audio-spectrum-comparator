@@ -117,9 +117,16 @@ h1 span { color: var(--muted); }
 .value-negative { color: var(--blue) !important; }
 .value-boost { color: var(--green) !important; }
 .value-cut { color: var(--red) !important; }
+.band-guidance-warning span { font-weight: 600; }
 .warning-message { margin: 10px 0 0; color: var(--red); font-size: 11px; }
 .export-eq-preset { display: flex; align-items: center; gap: 8px; }
-.export-eq-preset .session-select { min-height: 32px; max-width: 100px; }
+.export-eq-preset .session-select { min-height: 32px; max-width: 160px; }
+.eq-preset-preview { flex-basis: 100%; margin-top: 12px; overflow-x: auto; }
+.eq-preset-preview table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.eq-preset-preview th, .eq-preset-preview td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+.eq-preset-preview th { color: var(--faint); font: 10px "DM Mono", monospace; text-transform: uppercase; letter-spacing: 0.04em; }
+.eq-preset-preview td:first-child { color: var(--text); font-weight: 500; }
+.eq-preset-preview tr.preview-row-warning td { background: rgba(238, 104, 93, 0.08); }
 .export-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 17px; padding-top: 15px; border-top: 1px solid var(--border); }
 .export-chart { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin-left: auto; color: var(--faint); font: 10px "DM Mono", monospace; }
 .chart-export-pair { display: inline-flex; gap: 2px; margin-left: 4px; }
