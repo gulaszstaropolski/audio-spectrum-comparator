@@ -5,7 +5,7 @@ import { downloadChart, downloadCsv, downloadEqPreset, type EqPresetFormat } fro
 
 const EQ_FORMAT_LABELS: Record<EqPresetFormat, string> = {
   fabfilter: "FabFilter Pro-Q 3 Instructions (TXT)",
-  presonus: "PreSonus Pro EQ (TXT)",
+  presonus: "PreSonus Pro EQ Instructions (TXT)",
 };
 
 export default function ExportOptions({
