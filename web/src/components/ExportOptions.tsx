@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { AnalysisResult } from "../types/audio";
-import { EXTREME_CORRECTION_DB, calculateEqCorrections } from "../utils/frequencyBands";
+import { calculateEqCorrections, formatExtremeWarning } from "../utils/frequencyBands";
 import { downloadChart, downloadCsv, downloadEqPreset, type EqPresetFormat } from "../utils/exportUtils";
 
 const EQ_FORMAT_LABELS: Record<EqPresetFormat, string> = {
@@ -89,7 +89,7 @@ export default function ExportOptions({
                     {band.correctionDb >= 0 ? "+" : ""}
                     {band.correctionDb.toFixed(2)} dB
                     {band.exceedsThreshold && (
-                      <span title={`Exceeds ±${EXTREME_CORRECTION_DB} dB`}> ⚠</span>
+                      <span title={formatExtremeWarning(band)}> ⚠</span>
                     )}
                   </td>
                   <td>{band.q.toFixed(2)}</td>

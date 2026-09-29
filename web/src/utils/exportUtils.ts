@@ -1,6 +1,6 @@
 import Plotly from "../plotly";
 import type { AnalysisResult, EqCorrectionBand, EqType } from "../types/audio";
-import { EXTREME_CORRECTION_DB } from "./frequencyBands";
+import { formatExtremeWarning } from "./frequencyBands";
 
 function csvCell(value: string | number): string {
   const text = String(value);
@@ -140,7 +140,8 @@ function buildVstPreset(bands: EqCorrectionBand[], labels: VstPresetLabels): str
   ];
   bands.forEach((band, index) => {
     const gain = `${band.correctionDb >= 0 ? "+" : ""}${band.correctionDb.toFixed(2)} dB`;
-    const warning = band.exceedsThreshold ? `  [!] exceeds ±${EXTREME_CORRECTION_DB} dB` : "";
+    const warningText = formatExtremeWarning(band);
+    const warning = warningText ? `  [!] ${warningText}` : "";
     lines.push(
       `Band ${index + 1} (${band.name}): Frequency = ${band.center} Hz | Gain = ${gain} | ` +
         `${labels.qLabel} = ${band.q.toFixed(2)} | ${labels.typeLabel} = ${labels.typeNames[band.eqType]} | ` +

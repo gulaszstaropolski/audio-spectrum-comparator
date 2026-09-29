@@ -8,7 +8,7 @@ import HeatmapChart from "./components/HeatmapChart";
 import SpectrumChart from "./components/SpectrumChart";
 import type { AnalysisResult, SavedSession } from "./types/audio";
 import { analyzeAudio } from "./utils/audioProcessor";
-import { EXTREME_CORRECTION_DB, calculateEqCorrections } from "./utils/frequencyBands";
+import { EXTREME_CORRECTION_DB, calculateEqCorrections, formatExtremeWarning } from "./utils/frequencyBands";
 
 const STORAGE_KEY = "audio-spectrum-comparator.sessions";
 const TABS = [
@@ -55,9 +55,7 @@ export default function App() {
     () => (analysis ? calculateEqCorrections(analysis.bands) : []),
     [analysis],
   );
-  const hasExtremeCorrection = eqCorrections.some(
-    (band) => Math.abs(band.correctionDb) > EXTREME_CORRECTION_DB,
-  );
+  const hasExtremeCorrection = eqCorrections.some((band) => band.exceedsThreshold);
 
   useEffect(() => {
     if (!previewFile) {
@@ -338,7 +336,7 @@ export default function App() {
                         <span className={band.correctionDb >= 0 ? "value-boost" : "value-cut"}>
                           {band.correctionDb >= 0 ? "Boost" : "Cut"} {Math.abs(band.correctionDb).toFixed(1)} dB @ {band.center} Hz
                           (Q {band.q.toFixed(2)}, {band.eqType}, {band.bypass ? "Bypassed" : "Active"})
-                          {band.exceedsThreshold && <span title={`Exceeds ±${EXTREME_CORRECTION_DB} dB`}> ⚠</span>}
+                          {band.exceedsThreshold && <span title={formatExtremeWarning(band)}> ⚠</span>}
                         </span>
                       </p>
                     ))}
