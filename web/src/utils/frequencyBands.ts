@@ -6,6 +6,9 @@ export const EXTREME_CORRECTION_DB = 12;
 // Corrections smaller than this are treated as "no meaningful change" and the
 // band is marked as bypassed in exported presets, since applying a fraction
 // of a dB of correction is inaudible and just adds clutter to the preset.
+// 0.1 dB is chosen because it's below the ~0.2–0.5 dB commonly cited as the
+// smallest gain change a human can reliably perceive, and it also absorbs
+// floating-point rounding noise from the underlying FFT-based averaging.
 export const BYPASS_THRESHOLD_DB = 0.1;
 
 // Standard parametric EQ settings per band. Each band gets its own musical Q:

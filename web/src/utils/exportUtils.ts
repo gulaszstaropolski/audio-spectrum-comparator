@@ -123,8 +123,10 @@ type VstPresetLabels = {
   typeLabel: string;
   typeNames: Record<EqType, string>;
   bypassLabel: string;
-  bypassOn: string;
-  bypassOff: string;
+  // Text shown next to bypassLabel when the band IS bypassed / inactive.
+  bypassedValue: string;
+  // Text shown next to bypassLabel when the band is active / not bypassed.
+  activeValue: string;
 };
 
 function buildVstPreset(bands: EqCorrectionBand[], labels: VstPresetLabels): string {
@@ -142,7 +144,7 @@ function buildVstPreset(bands: EqCorrectionBand[], labels: VstPresetLabels): str
     lines.push(
       `Band ${index + 1} (${band.name}): Frequency = ${band.center} Hz | Gain = ${gain} | ` +
         `${labels.qLabel} = ${band.q.toFixed(2)} | ${labels.typeLabel} = ${labels.typeNames[band.eqType]} | ` +
-        `${labels.bypassLabel} = ${band.bypass ? labels.bypassOn : labels.bypassOff}${warning}`,
+        `${labels.bypassLabel} = ${band.bypass ? labels.bypassedValue : labels.activeValue}${warning}`,
     );
   });
   return lines.join("\r\n");
@@ -171,8 +173,8 @@ function buildFabFilterPreset(bands: EqCorrectionBand[]): string {
     typeLabel: "Shape",
     typeNames: FABFILTER_TYPE_NAMES,
     bypassLabel: "Bypass",
-    bypassOn: "On",
-    bypassOff: "Off",
+    bypassedValue: "On",
+    activeValue: "Off",
   });
 }
 
@@ -185,8 +187,8 @@ function buildPresonusPreset(bands: EqCorrectionBand[]): string {
     typeLabel: "Type",
     typeNames: PRESONUS_TYPE_NAMES,
     bypassLabel: "Band On",
-    bypassOn: "No",
-    bypassOff: "Yes",
+    bypassedValue: "No",
+    activeValue: "Yes",
   });
 }
 
