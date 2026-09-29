@@ -176,6 +176,6 @@ export function downloadEqPreset(bands: EqCorrectionBand[], format: EqPresetForm
     triggerDownload(buildEqPresetPresonus(bands), filename, "text/plain;charset=utf-8");
   } else {
     const unknownFormat: never = format;
-    throw new Error(`Unsupported EQ preset format: ${String(unknownFormat)}`);
+    throw new Error(`Unsupported EQ preset format: ${String(unknownFormat as string)}`);
   }
 }
