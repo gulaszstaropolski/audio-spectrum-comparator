@@ -11,6 +11,13 @@ export default function ExportOptions({
   activeTab: "heatmap" | "spectrum" | "bands" | "correction" | "data";
 }) {
   const [eqFormat, setEqFormat] = useState<EqPresetFormat>("json");
+  const eqFormatDescriptions: Record<EqPresetFormat, string> = {
+    json: "Generic JSON preset with all band data",
+    txt: "Generic human-readable text preset",
+    csv: "Generic CSV spreadsheet of band data",
+    fabfilter: "FabFilter Pro-Q 3 readable preset (.txt) with Band1, Band2, ... and 100% mix",
+    presonus: "PreSonus Pro EQ preset (.txt) compatible with Studio One",
+  };
   const chartId = {
     heatmap: "heatmap-chart",
     spectrum: "spectrum-chart",
@@ -30,13 +37,27 @@ export default function ExportOptions({
           <select
             className="session-select"
             aria-label="EQ preset format"
+            title={eqFormatDescriptions[eqFormat]}
             value={eqFormat}
             onChange={(event) => setEqFormat(event.target.value as EqPresetFormat)}
           >
-            <option value="json">JSON</option>
-            <option value="txt">TXT</option>
-            <option value="csv">CSV</option>
+            <option value="json" title={eqFormatDescriptions.json}>
+              Generic JSON
+            </option>
+            <option value="txt" title={eqFormatDescriptions.txt}>
+              Generic TXT
+            </option>
+            <option value="csv" title={eqFormatDescriptions.csv}>
+              Generic CSV
+            </option>
+            <option value="fabfilter" title={eqFormatDescriptions.fabfilter}>
+              FabFilter Pro-Q 3
+            </option>
+            <option value="presonus" title={eqFormatDescriptions.presonus}>
+              PreSonus Pro EQ
+            </option>
           </select>
+          <span className="eq-preset-format-description">{eqFormatDescriptions[eqFormat]}</span>
           <button
             className="button button-primary"
             onClick={() =>

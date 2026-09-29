@@ -120,6 +120,7 @@ h1 span { color: var(--muted); }
 .warning-message { margin: 10px 0 0; color: var(--red); font-size: 11px; }
 .export-eq-preset { display: flex; align-items: center; gap: 8px; }
 .export-eq-preset .session-select { min-height: 32px; max-width: 100px; }
+.eq-preset-format-description { color: var(--faint); font: 10px "DM Mono", monospace; max-width: 220px; }
 .export-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 17px; padding-top: 15px; border-top: 1px solid var(--border); }
 .export-chart { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin-left: auto; color: var(--faint); font: 10px "DM Mono", monospace; }
 .chart-export-pair { display: inline-flex; gap: 2px; margin-left: 4px; }
