@@ -25,3 +25,8 @@ Thumbs.db
 *.flac
 output/
 *.log
+
+# Browser app
+web/node_modules/
+web/dist/
+web/*.tsbuildinfo
