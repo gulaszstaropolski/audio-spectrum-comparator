@@ -72,7 +72,6 @@ function buildEqPresetJson(bands: EqCorrectionBand[]): string {
       q: band.q,
       type: band.eqType,
       bypass: band.bypass,
-      enabled: !band.bypass,
       exceedsThreshold: band.exceedsThreshold,
     })),
   };
