@@ -3,7 +3,19 @@ export type FrequencyBand = {
   range: string;
   low: number;
   high: number;
+  center: number;
+  q: number;
+  eqType: string;
   differenceDb: number;
+};
+
+export type EqCorrectionBand = {
+  name: string;
+  range: string;
+  center: number;
+  q: number;
+  eqType: string;
+  correctionDb: number;
 };
 
 export type AnalysisResult = {
