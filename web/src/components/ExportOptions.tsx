@@ -4,11 +4,8 @@ import { calculateEqCorrections, formatExtremeWarning } from "../utils/frequency
 import { downloadChart, downloadCsv, downloadEqPreset, type EqPresetFormat } from "../utils/exportUtils";
 
 const EQ_FORMAT_LABELS: Record<EqPresetFormat, string> = {
-  json: "Generic JSON",
-  txt: "Generic TXT",
-  csv: "Generic CSV",
-  fabfilter: "FabFilter Pro-Q 3",
-  presonus: "PreSonus Pro EQ",
+  fabfilter: "FabFilter Pro-Q 3 Instructions (TXT)",
+  presonus: "PreSonus Pro EQ (TXT)",
 };
 
 export default function ExportOptions({
@@ -18,7 +15,7 @@ export default function ExportOptions({
   analysis: AnalysisResult;
   activeTab: "heatmap" | "spectrum" | "bands" | "correction" | "data";
 }) {
-  const [eqFormat, setEqFormat] = useState<EqPresetFormat>("json");
+  const [eqFormat, setEqFormat] = useState<EqPresetFormat>("fabfilter");
   const [showPreview, setShowPreview] = useState(false);
   const chartId = {
     heatmap: "heatmap-chart",
