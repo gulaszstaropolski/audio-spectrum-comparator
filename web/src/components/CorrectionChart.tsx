@@ -13,6 +13,9 @@ const EQ_TYPE_LABELS: Record<EqType, string> = {
 
 // Compact "1.2k" style Hz label used on the graph's exact-parameter markers,
 // so the axis stays readable even for the highest bands (e.g. 12000 Hz).
+// This is a rounded, space-saving label only (e.g. 12345 -> "12.3k"); the
+// full, unrounded frequency is always available via the bar's hover tooltip
+// and in the exported instructions text, so no precision is lost overall.
 function formatHz(frequency: number): string {
   return frequency >= 1000
     ? `${(frequency / 1000).toFixed(frequency % 1000 === 0 ? 0 : 1)}k`
