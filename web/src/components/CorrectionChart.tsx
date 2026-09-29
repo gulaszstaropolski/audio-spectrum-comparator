@@ -1,5 +1,15 @@
 import Plot from "./Plot";
-import type { EqCorrectionBand } from "../types/audio";
+import type { EqCorrectionBand, EqType } from "../types/audio";
+
+// Human-readable filter type labels for the graph, matching the wording
+// used in the exported FabFilter/PreSonus instructions so the chart and
+// text export are consistent (rather than showing the raw EqType values).
+const EQ_TYPE_LABELS: Record<EqType, string> = {
+  Peaking: "Bell",
+  LowShelf: "Low Shelf",
+  HighShelf: "High Shelf",
+  Notch: "Notch",
+};
 
 // Compact "1.2k" style Hz label used on the graph's exact-parameter markers,
 // so the axis stays readable even for the highest bands (e.g. 12000 Hz).
@@ -28,7 +38,7 @@ export default function CorrectionChart({
   const customdata: (number | string)[][] = corrections.map((band) => [
     band.center,
     band.q,
-    band.eqType,
+    EQ_TYPE_LABELS[band.eqType],
     band.bypass ? "Bypassed" : "Active",
     band.range,
   ]);
