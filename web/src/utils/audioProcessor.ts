@@ -235,8 +235,11 @@ export async function analyzeAudio(
   );
   const referenceSpectrum = smoothDbValues(rawReferenceSpectrum, SMOOTHING_WINDOW);
   const mixSpectrum = smoothDbValues(rawMixSpectrum, SMOOTHING_WINDOW);
+  // Smooth the difference from the raw (unsmoothed) spectra rather than the
+  // already-smoothed spectra above, to avoid compounding two smoothing
+  // passes into an over-smoothed correction curve.
   const differenceDb = smoothDbValues(
-    mixSpectrum.map((value, index) => value - referenceSpectrum[index]),
+    rawMixSpectrum.map((value, index) => value - rawReferenceSpectrum[index]),
     SMOOTHING_WINDOW,
   );
   const heatmapValues = Array.from({ length: HEATMAP_BANDS }, (_, bucket) =>
