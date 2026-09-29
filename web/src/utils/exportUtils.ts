@@ -93,11 +93,11 @@ function buildVstPreset(bands: EqCorrectionBand[], labels: VstPresetLabels): str
     `Generated: ${new Date().toISOString()}`,
     "",
     labels.copyNote,
-    "Format: Band N: Frequency, Gain, Q (Type, Bypass state)",
+    `Format: Band N (name): Frequency Hz, Gain dB, ${labels.qLabel}: value (${labels.typeLabel}: type, ${labels.bypassLabel}: state)`,
     "",
   ];
   bands.forEach((band, index) => {
-    const gain = `${band.correctionDb >= 0 ? "+" : ""}${band.correctionDb.toFixed(1)}dB`;
+    const gain = `${band.correctionDb >= 0 ? "+" : ""}${band.correctionDb.toFixed(1)} dB`;
     const warningText = formatExtremeWarning(band);
     const warning = warningText ? `  [!] ${warningText}` : "";
     lines.push(
