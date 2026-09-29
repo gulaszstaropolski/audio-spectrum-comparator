@@ -15,6 +15,7 @@
   --accent-strong: #4486e3;
   --red: #f0786e;
   --blue: #70aefa;
+  --green: #4caf6a;
   --input-bg: #121923;
 }
 
@@ -32,6 +33,7 @@
   --accent-strong: #2863b8;
   --red: #ce5147;
   --blue: #286fc3;
+  --green: #2e8b52;
   --input-bg: #f5f7fa;
 }
 
@@ -102,6 +104,8 @@ h1 span { color: var(--muted); }
 .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 .legend-dot.blue, .legend-line.blue { background: var(--blue); }
 .legend-dot.red, .legend-line.red { background: var(--red); }
+.legend-dot.boost { background: var(--green); }
+.legend-dot.cut { background: var(--red); }
 .legend-line { width: 18px; height: 2px; }
 .chart-content { min-height: 360px; }
 .chart-frame { width: 100%; height: 380px; }
@@ -111,6 +115,11 @@ h1 span { color: var(--muted); }
 .band-guidance strong { color: var(--text); font-weight: 500; }
 .value-positive { color: var(--red) !important; }
 .value-negative { color: var(--blue) !important; }
+.value-boost { color: var(--green) !important; }
+.value-cut { color: var(--red) !important; }
+.warning-message { margin: 10px 0 0; color: var(--red); font-size: 11px; }
+.export-eq-preset { display: flex; align-items: center; gap: 8px; }
+.export-eq-preset .session-select { min-height: 32px; max-width: 100px; }
 .export-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 17px; padding-top: 15px; border-top: 1px solid var(--border); }
 .export-chart { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin-left: auto; color: var(--faint); font: 10px "DM Mono", monospace; }
 .chart-export-pair { display: inline-flex; gap: 2px; margin-left: 4px; }

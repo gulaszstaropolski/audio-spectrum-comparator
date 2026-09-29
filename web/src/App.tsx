@@ -1,18 +1,21 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AudioUpload from "./components/AudioUpload";
 import BandAnalysisChart from "./components/BandAnalysisChart";
+import CorrectionChart from "./components/CorrectionChart";
 import DataTable from "./components/DataTable";
 import ExportOptions from "./components/ExportOptions";
 import HeatmapChart from "./components/HeatmapChart";
 import SpectrumChart from "./components/SpectrumChart";
 import type { AnalysisResult, SavedSession } from "./types/audio";
 import { analyzeAudio } from "./utils/audioProcessor";
+import { EXTREME_CORRECTION_DB, calculateEqCorrections } from "./utils/frequencyBands";
 
 const STORAGE_KEY = "audio-spectrum-comparator.sessions";
 const TABS = [
   { id: "heatmap", label: "Difference heatmap" },
   { id: "spectrum", label: "Spectrum overlay" },
   { id: "bands", label: "Frequency bands" },
+  { id: "correction", label: "EQ Correction" },
   { id: "data", label: "Data table" },
 ] as const;
 
@@ -48,6 +51,13 @@ export default function App() {
   const [previewUrl, setPreviewUrl] = useState("");
   const audioRef = useRef<HTMLAudioElement>(null);
   const previewFile = previewChoice === "reference" ? referenceFile : mixFile;
+  const eqCorrections = useMemo(
+    () => (analysis ? calculateEqCorrections(analysis.bands) : []),
+    [analysis],
+  );
+  const hasExtremeCorrection = eqCorrections.some(
+    (band) => Math.abs(band.correctionDb) > EXTREME_CORRECTION_DB,
+  );
 
   useEffect(() => {
     if (!previewFile) {
@@ -271,6 +281,12 @@ export default function App() {
                 {activeTab === "bands" && (
                   <span>Positive = mix louder · Negative = mix quieter</span>
                 )}
+                {activeTab === "correction" && (
+                  <>
+                    <span><i className="legend-dot boost" /> Boost (lift)</span>
+                    <span><i className="legend-dot cut" /> Cut</span>
+                  </>
+                )}
                 {activeTab === "data" && (
                   <span>Showing all {analysis.frequencies.length.toLocaleString()} frequency bins</span>
                 )}
@@ -279,6 +295,9 @@ export default function App() {
                 {activeTab === "heatmap" && <HeatmapChart analysis={analysis} />}
                 {activeTab === "spectrum" && <SpectrumChart analysis={analysis} />}
                 {activeTab === "bands" && <BandAnalysisChart analysis={analysis} />}
+                {activeTab === "correction" && (
+                  <CorrectionChart corrections={eqCorrections} />
+                )}
                 {activeTab === "data" && <DataTable analysis={analysis} />}
               </div>
               {activeTab === "heatmap" && (
@@ -298,6 +317,31 @@ export default function App() {
                     </p>
                   ))}
                 </div>
+              )}
+              {activeTab === "correction" && (
+                <>
+                  <p className="chart-note">
+                    Suggested parametric EQ correction to bring your mix closer to the reference.
+                    Positive dB values boost a band, negative values cut it. Export a preset below
+                    and load it into your VST EQ (ReaEQ, FabFilter Pro-Q, or similar).
+                  </p>
+                  {hasExtremeCorrection && (
+                    <p className="warning-message" role="alert">
+                      ⚠ One or more bands need a correction greater than {EXTREME_CORRECTION_DB} dB.
+                      Such large moves are rarely musical — consider applying them gradually or in multiple passes.
+                    </p>
+                  )}
+                  <div className="band-guidance">
+                    {eqCorrections.map((band) => (
+                      <p key={band.name}>
+                        <strong>{band.name}</strong>
+                        <span className={band.correctionDb >= 0 ? "value-boost" : "value-cut"}>
+                          {band.correctionDb >= 0 ? "Boost" : "Cut"} {Math.abs(band.correctionDb).toFixed(1)} dB @ {band.center} Hz (Q {band.q})
+                        </span>
+                      </p>
+                    ))}
+                  </div>
+                </>
               )}
               <ExportOptions analysis={analysis} activeTab={activeTab} />
             </div>

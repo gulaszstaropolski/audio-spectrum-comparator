@@ -1,9 +1,23 @@
+export type EqType = "Peaking" | "LowShelf" | "HighShelf" | "Notch";
+
 export type FrequencyBand = {
   name: string;
   range: string;
   low: number;
   high: number;
+  center: number;
+  q: number;
+  eqType: EqType;
   differenceDb: number;
+};
+
+export type EqCorrectionBand = {
+  name: string;
+  range: string;
+  center: number;
+  q: number;
+  eqType: EqType;
+  correctionDb: number;
 };
 
 export type AnalysisResult = {
