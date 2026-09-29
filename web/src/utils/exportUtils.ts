@@ -97,7 +97,7 @@ function buildVstPreset(bands: EqCorrectionBand[], labels: VstPresetLabels): str
     "",
   ];
   bands.forEach((band, index) => {
-    const gain = `${band.correctionDb >= 0 ? "+" : ""}${band.correctionDb.toFixed(1)} dB`;
+    const gain = `${band.correctionDb >= 0 ? "+" : ""}${band.correctionDb.toFixed(2)} dB`;
     const warningText = formatExtremeWarning(band);
     const warning = warningText ? `  [!] ${warningText}` : "";
     lines.push(
