@@ -92,7 +92,9 @@ function magnitudeDb(magnitude: number): number {
 // Applies a centered moving-average filter over dB values to smooth out
 // spiky anomalies (transients, noise) while keeping the underlying
 // frequencies array unchanged (no resampling). Edges use a shrinking window
-// so the array length is preserved.
+// so the array length is preserved. `windowSize` is expected to be a small,
+// positive odd number (e.g. 3-5) relative to `values.length`; a window
+// approaching the array length would over-flatten the result.
 function smoothDbValues(values: number[], windowSize: number): number[] {
   if (windowSize <= 1 || values.length <= 1) return values.slice();
   const half = Math.floor(windowSize / 2);
