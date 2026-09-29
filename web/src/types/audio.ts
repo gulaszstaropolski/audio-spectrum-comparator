@@ -18,6 +18,11 @@ export type EqCorrectionBand = {
   q: number;
   eqType: EqType;
   correctionDb: number;
+  // Whether the correction is small enough that the band should be treated
+  // as inactive/bypassed rather than applied.
+  bypass: boolean;
+  // Whether the correction exceeds the "extreme move" threshold.
+  exceedsThreshold: boolean;
 };
 
 export type AnalysisResult = {

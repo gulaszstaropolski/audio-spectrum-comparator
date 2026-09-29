@@ -333,10 +333,12 @@ export default function App() {
                   )}
                   <div className="band-guidance">
                     {eqCorrections.map((band) => (
-                      <p key={band.name}>
+                      <p key={band.name} className={band.exceedsThreshold ? "band-guidance-warning" : undefined}>
                         <strong>{band.name}</strong>
                         <span className={band.correctionDb >= 0 ? "value-boost" : "value-cut"}>
-                          {band.correctionDb >= 0 ? "Boost" : "Cut"} {Math.abs(band.correctionDb).toFixed(1)} dB @ {band.center} Hz (Q {band.q})
+                          {band.correctionDb >= 0 ? "Boost" : "Cut"} {Math.abs(band.correctionDb).toFixed(1)} dB @ {band.center} Hz
+                          (Q {band.q.toFixed(2)}, {band.eqType}, {band.bypass ? "Bypassed" : "Active"})
+                          {band.exceedsThreshold && <span title={`Exceeds ±${EXTREME_CORRECTION_DB} dB`}> ⚠</span>}
                         </span>
                       </p>
                     ))}

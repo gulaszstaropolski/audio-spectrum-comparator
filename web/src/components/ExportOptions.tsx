@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { AnalysisResult } from "../types/audio";
-import { calculateEqCorrections } from "../utils/frequencyBands";
+import { EXTREME_CORRECTION_DB, calculateEqCorrections } from "../utils/frequencyBands";
 import { downloadChart, downloadCsv, downloadEqPreset, type EqPresetFormat } from "../utils/exportUtils";
+
+const EQ_FORMAT_LABELS: Record<EqPresetFormat, string> = {
+  json: "Generic JSON",
+  txt: "Generic TXT",
+  csv: "Generic CSV",
+  fabfilter: "FabFilter Pro-Q 3",
+  presonus: "PreSonus Pro EQ",
+};
 
 export default function ExportOptions({
   analysis,
@@ -11,12 +19,17 @@ export default function ExportOptions({
   activeTab: "heatmap" | "spectrum" | "bands" | "correction" | "data";
 }) {
   const [eqFormat, setEqFormat] = useState<EqPresetFormat>("json");
+  const [showPreview, setShowPreview] = useState(false);
   const chartId = {
     heatmap: "heatmap-chart",
     spectrum: "spectrum-chart",
     bands: "band-chart",
     correction: "correction-chart",
   } as const;
+  const eqCorrections = useMemo(
+    () => calculateEqCorrections(analysis.bands),
+    [analysis],
+  );
   return (
     <div className="export-actions">
       <button className="button button-secondary" onClick={() => downloadCsv(analysis)}>
@@ -33,18 +46,59 @@ export default function ExportOptions({
             value={eqFormat}
             onChange={(event) => setEqFormat(event.target.value as EqPresetFormat)}
           >
-            <option value="json">JSON</option>
-            <option value="txt">TXT</option>
-            <option value="csv">CSV</option>
+            {(Object.keys(EQ_FORMAT_LABELS) as EqPresetFormat[]).map((format) => (
+              <option value={format} key={format}>
+                {EQ_FORMAT_LABELS[format]}
+              </option>
+            ))}
           </select>
           <button
+            className="button button-secondary"
+            onClick={() => setShowPreview((value) => !value)}
+            aria-expanded={showPreview}
+          >
+            {showPreview ? "Hide preview" : "Preview preset"}
+          </button>
+          <button
             className="button button-primary"
-            onClick={() =>
-              downloadEqPreset(calculateEqCorrections(analysis.bands), eqFormat)
-            }
+            onClick={() => downloadEqPreset(eqCorrections, eqFormat)}
           >
             Export EQ Preset
           </button>
+        </div>
+      )}
+      {activeTab === "correction" && showPreview && (
+        <div className="eq-preset-preview">
+          <table>
+            <thead>
+              <tr>
+                <th>Band</th>
+                <th>Frequency</th>
+                <th>Gain</th>
+                <th>Q</th>
+                <th>Type</th>
+                <th>Bypass</th>
+              </tr>
+            </thead>
+            <tbody>
+              {eqCorrections.map((band) => (
+                <tr key={band.name} className={band.exceedsThreshold ? "preview-row-warning" : undefined}>
+                  <td>{band.name}</td>
+                  <td>{band.center} Hz</td>
+                  <td className={band.correctionDb >= 0 ? "value-boost" : "value-cut"}>
+                    {band.correctionDb >= 0 ? "+" : ""}
+                    {band.correctionDb.toFixed(2)} dB
+                    {band.exceedsThreshold && (
+                      <span title={`Exceeds ±${EXTREME_CORRECTION_DB} dB`}> ⚠</span>
+                    )}
+                  </td>
+                  <td>{band.q.toFixed(2)}</td>
+                  <td>{band.eqType}</td>
+                  <td>{band.bypass ? "Bypassed" : "Active"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
       {activeTab !== "data" && activeTab !== "correction" && (

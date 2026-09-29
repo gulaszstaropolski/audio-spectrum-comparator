@@ -1,5 +1,6 @@
 import Plotly from "../plotly";
 import type { AnalysisResult, EqCorrectionBand } from "../types/audio";
+import { EXTREME_CORRECTION_DB } from "./frequencyBands";
 
 function csvCell(value: string | number): string {
   const text = String(value);
@@ -42,11 +43,20 @@ export function downloadChart(chartId: string, format: "png" | "svg"): void {
   });
 }
 
-export type EqPresetFormat = "json" | "txt" | "csv";
+export type EqPresetFormat = "json" | "txt" | "csv" | "fabfilter" | "presonus";
+
+const EQ_PRESET_FILE_INFO: Record<EqPresetFormat, { prefix: string; extension: string }> = {
+  json: { prefix: "eq-correction", extension: "json" },
+  txt: { prefix: "eq-correction", extension: "txt" },
+  csv: { prefix: "eq-correction", extension: "csv" },
+  fabfilter: { prefix: "eq-correction-fabfilter-pro-q3", extension: "txt" },
+  presonus: { prefix: "eq-correction-presonus-pro-eq", extension: "txt" },
+};
 
 function eqPresetFilename(format: EqPresetFormat): string {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  return `eq-correction-${timestamp}.${format}`;
+  const { prefix, extension } = EQ_PRESET_FILE_INFO[format];
+  return `${prefix}-${timestamp}.${extension}`;
 }
 
 function buildEqPresetJson(bands: EqCorrectionBand[]): string {
@@ -61,7 +71,9 @@ function buildEqPresetJson(bands: EqCorrectionBand[]): string {
       gainDb: Number(band.correctionDb.toFixed(2)),
       q: band.q,
       type: band.eqType,
-      enabled: true,
+      bypass: band.bypass,
+      enabled: !band.bypass,
+      exceedsThreshold: band.exceedsThreshold,
     })),
   };
   return JSON.stringify(preset, null, 2);
@@ -72,12 +84,12 @@ function buildEqPresetTxt(bands: EqCorrectionBand[]): string {
     "Audio Spectrum Comparator - EQ Correction Preset",
     `Generated: ${new Date().toISOString()}`,
     "",
-    "Band | Frequency | Type | Gain | Q",
+    "Band | Frequency | Type | Gain | Q | Bypass",
   ];
   bands.forEach((band) => {
     const gain = `${band.correctionDb >= 0 ? "+" : ""}${band.correctionDb.toFixed(2)} dB`;
     lines.push(
-      `${band.name} (${band.range}) | ${band.center} Hz | ${band.eqType} | ${gain} | Q ${band.q}`,
+      `${band.name} (${band.range}) | ${band.center} Hz | ${band.eqType} | ${gain} | Q ${band.q} | ${band.bypass ? "Bypassed" : "Active"}`,
     );
   });
   return lines.join("\r\n");
@@ -85,7 +97,7 @@ function buildEqPresetTxt(bands: EqCorrectionBand[]): string {
 
 function buildEqPresetCsv(bands: EqCorrectionBand[]): string {
   const rows = [
-    ["Band", "Range", "Frequency (Hz)", "Type", "Gain (dB)", "Q"],
+    ["Band", "Range", "Frequency (Hz)", "Type", "Gain (dB)", "Q", "Bypass"],
     ...bands.map((band) => [
       band.name,
       band.range,
@@ -93,9 +105,72 @@ function buildEqPresetCsv(bands: EqCorrectionBand[]): string {
       band.eqType,
       band.correctionDb.toFixed(2),
       String(band.q),
+      band.bypass ? "Bypassed" : "Active",
     ]),
   ];
   return rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+}
+
+// FabFilter Pro-Q 3 and PreSonus Pro EQ both use proprietary preset formats
+// that aren't publicly documented, so instead we generate a plain-text
+// reference listing each band's parameters (Frequency, Gain, Q, filter
+// type, Bypass) in the order they need to be entered per band, so the
+// preset can be recreated in the plugin in a couple of minutes.
+type VstPresetLabels = {
+  title: string;
+  instructions: string;
+  qLabel: string;
+  typeLabel: string;
+  bypassLabel: string;
+  bypassOn: string;
+  bypassOff: string;
+};
+
+function buildVstPreset(bands: EqCorrectionBand[], labels: VstPresetLabels): string {
+  const lines = [
+    labels.title,
+    "Audio Spectrum Comparator - EQ Correction",
+    `Generated: ${new Date().toISOString()}`,
+    "",
+    labels.instructions,
+    "",
+  ];
+  bands.forEach((band, index) => {
+    const gain = `${band.correctionDb >= 0 ? "+" : ""}${band.correctionDb.toFixed(2)} dB`;
+    const warning = band.exceedsThreshold ? `  [!] exceeds ±${EXTREME_CORRECTION_DB} dB` : "";
+    lines.push(
+      `Band ${index + 1} (${band.name}): Frequency = ${band.center} Hz | Gain = ${gain} | ` +
+        `${labels.qLabel} = ${band.q.toFixed(2)} | ${labels.typeLabel} = Bell | ` +
+        `${labels.bypassLabel} = ${band.bypass ? labels.bypassOn : labels.bypassOff}${warning}`,
+    );
+  });
+  return lines.join("\r\n");
+}
+
+function buildFabFilterPreset(bands: EqCorrectionBand[]): string {
+  return buildVstPreset(bands, {
+    title: "FabFilter Pro-Q 3 - Band Settings",
+    instructions:
+      "For each band below: add a band in Pro-Q 3, then set Frequency, Gain, Q and Shape to the values shown.",
+    qLabel: "Q",
+    typeLabel: "Shape",
+    bypassLabel: "Bypass",
+    bypassOn: "On",
+    bypassOff: "Off",
+  });
+}
+
+function buildPresonusPreset(bands: EqCorrectionBand[]): string {
+  return buildVstPreset(bands, {
+    title: "PreSonus Pro EQ - Band Settings",
+    instructions:
+      "For each band below: add/select a band in Pro EQ, then set Frequency, Gain, Bandwidth (Q) and Type to the values shown.",
+    qLabel: "Bandwidth (Q)",
+    typeLabel: "Type",
+    bypassLabel: "Band On",
+    bypassOn: "No",
+    bypassOff: "Yes",
+  });
 }
 
 export function downloadEqPreset(bands: EqCorrectionBand[], format: EqPresetFormat): void {
@@ -104,7 +179,11 @@ export function downloadEqPreset(bands: EqCorrectionBand[], format: EqPresetForm
     triggerDownload(buildEqPresetJson(bands), filename, "application/json;charset=utf-8");
   } else if (format === "txt") {
     triggerDownload(buildEqPresetTxt(bands), filename, "text/plain;charset=utf-8");
-  } else {
+  } else if (format === "csv") {
     triggerDownload(buildEqPresetCsv(bands), filename, "text/csv;charset=utf-8");
+  } else if (format === "fabfilter") {
+    triggerDownload(buildFabFilterPreset(bands), filename, "text/plain;charset=utf-8");
+  } else {
+    triggerDownload(buildPresonusPreset(bands), filename, "text/plain;charset=utf-8");
   }
 }
