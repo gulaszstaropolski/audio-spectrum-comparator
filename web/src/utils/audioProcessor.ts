@@ -1,8 +1,12 @@
 import type { AnalysisResult } from "../types/audio";
 import { calculateBandDifferences } from "./frequencyBands";
 
-const FFT_SIZE = 4096;
-const HOP_SIZE = 512;
+const FFT_SIZE = 8192;
+const HOP_SIZE = 256;
+// Width (in bins) of the moving-average window applied to smooth spectra and
+// per-band differences, reducing spiky anomalies from transients/noise while
+// preserving the overall spectral shape.
+const SMOOTHING_WINDOW = 5;
 const HEATMAP_BANDS = 160;
 const MAX_TIME_COLUMNS = 360;
 const MIN_FREQUENCY = 20;
@@ -83,6 +87,24 @@ function fft(real: Float64Array, imag: Float64Array): void {
 
 function magnitudeDb(magnitude: number): number {
   return 20 * Math.log10(Math.max(EPSILON, magnitude));
+}
+
+// Applies a centered moving-average filter over dB values to smooth out
+// spiky anomalies (transients, noise) while keeping the underlying
+// frequencies array unchanged (no resampling). Edges use a shrinking window
+// so the array length is preserved. `windowSize` is expected to be a small,
+// positive odd number (e.g. 3-5) relative to `values.length`; a window
+// approaching the array length would over-flatten the result.
+function smoothDbValues(values: number[], windowSize: number): number[] {
+  if (windowSize <= 1 || values.length <= 1) return values.slice();
+  const half = Math.floor(windowSize / 2);
+  return values.map((_, index) => {
+    const start = Math.max(0, index - half);
+    const end = Math.min(values.length - 1, index + half);
+    let sum = 0;
+    for (let i = start; i <= end; i += 1) sum += values[i];
+    return sum / (end - start + 1);
+  });
 }
 
 export async function analyzeAudio(
@@ -207,14 +229,20 @@ export async function analyzeAudio(
     }
   }
 
-  const referenceSpectrum = Array.from(referenceTotals, (value) =>
+  const rawReferenceSpectrum = Array.from(referenceTotals, (value) =>
     magnitudeDb((value / frameCount) * (2 / FFT_SIZE)),
   );
-  const mixSpectrum = Array.from(mixTotals, (value) =>
+  const rawMixSpectrum = Array.from(mixTotals, (value) =>
     magnitudeDb((value / frameCount) * (2 / FFT_SIZE)),
   );
-  const differenceDb = mixSpectrum.map(
-    (value, index) => value - referenceSpectrum[index],
+  const referenceSpectrum = smoothDbValues(rawReferenceSpectrum, SMOOTHING_WINDOW);
+  const mixSpectrum = smoothDbValues(rawMixSpectrum, SMOOTHING_WINDOW);
+  // Smooth the difference from the raw (unsmoothed) spectra rather than the
+  // already-smoothed spectra above, to avoid compounding two smoothing
+  // passes into an over-smoothed correction curve.
+  const differenceDb = smoothDbValues(
+    rawMixSpectrum.map((value, index) => value - rawReferenceSpectrum[index]),
+    SMOOTHING_WINDOW,
   );
   const heatmapValues = Array.from({ length: HEATMAP_BANDS }, (_, bucket) =>
     Array.from({ length: timeColumnCount }, (_, column) => {
