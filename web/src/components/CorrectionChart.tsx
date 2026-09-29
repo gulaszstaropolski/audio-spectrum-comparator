@@ -19,6 +19,10 @@ function formatHz(frequency: number): string {
     : String(frequency);
 }
 
+function colorForGain(gain: number): string {
+  return gain >= 0 ? "#4caf6a" : "#ee685d";
+}
+
 export default function CorrectionChart({
   corrections,
 }: {
@@ -37,7 +41,7 @@ export default function CorrectionChart({
   const CUSTOMDATA_RANGE = 4;
   const customdata: (number | string)[][] = corrections.map((band) => [
     band.center,
-    band.q,
+    band.q.toFixed(2),
     EQ_TYPE_LABELS[band.eqType],
     band.bypass ? "Bypassed" : "Active",
     band.range,
@@ -57,7 +61,7 @@ export default function CorrectionChart({
             x: names,
             y: gains,
             marker: {
-              color: gains.map((gain) => (gain >= 0 ? "#4caf6a" : "#ee685d")),
+              color: gains.map(colorForGain),
             },
             text: gains.map((gain) => `${gain >= 0 ? "+" : ""}${gain.toFixed(1)} dB`),
             textposition: "outside",
@@ -75,7 +79,7 @@ export default function CorrectionChart({
             marker: {
               size: 10,
               symbol: "diamond",
-              color: gains.map((gain) => (gain >= 0 ? "#4caf6a" : "#ee685d")),
+              color: gains.map(colorForGain),
               line: { color: "#0f1620", width: 1.5 },
             },
             text: pointLabels,
