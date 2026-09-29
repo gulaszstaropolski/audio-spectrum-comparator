@@ -1,32 +1,97 @@
 import Plot from "./Plot";
-import type { EqCorrectionBand } from "../types/audio";
+import type { EqCorrectionBand, EqType } from "../types/audio";
+
+// Human-readable filter type labels for the graph, matching the wording
+// used in the exported FabFilter/PreSonus instructions so the chart and
+// text export are consistent (rather than showing the raw EqType values).
+const EQ_TYPE_LABELS: Record<EqType, string> = {
+  Peaking: "Bell",
+  LowShelf: "Low Shelf",
+  HighShelf: "High Shelf",
+  Notch: "Notch",
+};
+
+// Compact "1.2k" style Hz label used on the graph's exact-parameter markers,
+// so the axis stays readable even for the highest bands (e.g. 12000 Hz).
+// This is a rounded, space-saving label only (e.g. 12345 -> "12.3k"); the
+// full, unrounded frequency is always available via the bar's hover tooltip
+// and in the exported instructions text, so no precision is lost overall.
+function formatHz(frequency: number): string {
+  return frequency >= 1000
+    ? `${(frequency / 1000).toFixed(frequency % 1000 === 0 ? 0 : 1)}k`
+    : String(frequency);
+}
+
+function colorForGain(gain: number): string {
+  return gain >= 0 ? "#4caf6a" : "#ee685d";
+}
+
+// Positional indices used by the hovertemplate below — plotly.js only
+// supports "%{customdata[N]}" array access in hovertemplate strings, not
+// "%{customdata.fieldName}" object property access, so we document the
+// index -> field mapping here explicitly instead of using "magic numbers".
+// Defined at module scope since these are fixed constants unrelated to props.
+const CUSTOMDATA_FREQUENCY = 0;
+const CUSTOMDATA_Q = 1;
+const CUSTOMDATA_TYPE = 2;
+const CUSTOMDATA_STATE = 3;
+const CUSTOMDATA_RANGE = 4;
 
 export default function CorrectionChart({
   corrections,
 }: {
   corrections: EqCorrectionBand[];
 }) {
+  const names = corrections.map((band) => band.name);
+  const gains = corrections.map((band) => band.correctionDb);
+  const customdata: (number | string)[][] = corrections.map((band) => [
+    band.center,
+    band.q.toFixed(2),
+    EQ_TYPE_LABELS[band.eqType],
+    band.bypass ? "Bypassed" : "Active",
+    band.range,
+  ]);
+  // Exact correction points (frequency + gain + Q), shown as markers on top
+  // of the bars so the graph communicates the specific band settings that
+  // will be entered in the EQ plugin, not just the "from-to" band range.
+  const pointLabels = corrections.map(
+    (band) => `${formatHz(band.center)}Hz · Q${band.q.toFixed(2)}`,
+  );
   return (
     <div className="chart-frame" id="correction-chart">
       <Plot
         data={[
           {
             type: "bar",
-            x: corrections.map((band) => band.name),
-            y: corrections.map((band) => band.correctionDb),
+            x: names,
+            y: gains,
             marker: {
-              color: corrections.map((band) =>
-                band.correctionDb >= 0 ? "#4caf6a" : "#ee685d",
-              ),
+              color: gains.map(colorForGain),
             },
-            text: corrections.map(
-              (band) => `${band.correctionDb >= 0 ? "+" : ""}${band.correctionDb.toFixed(1)} dB`,
-            ),
+            text: gains.map((gain) => `${gain >= 0 ? "+" : ""}${gain.toFixed(1)} dB`),
             textposition: "outside",
             cliponaxis: false,
-            customdata: corrections.map((band) => band.range),
+            customdata,
             hovertemplate:
-              "%{x}<br>%{customdata}<br>Correction: %{y:+.2f} dB<extra></extra>",
+              `<b>%{x}</b> (%{customdata[${CUSTOMDATA_RANGE}]})<br>Frequency: %{customdata[${CUSTOMDATA_FREQUENCY}]} Hz<br>Correction: %{y:+.2f} dB<br>` +
+              `Q: %{customdata[${CUSTOMDATA_Q}]}<br>Type: %{customdata[${CUSTOMDATA_TYPE}]}<br>%{customdata[${CUSTOMDATA_STATE}]}<extra></extra>`,
+          },
+          {
+            type: "scatter",
+            mode: "markers+text",
+            x: names,
+            y: gains,
+            marker: {
+              size: 10,
+              symbol: "diamond",
+              color: gains.map(colorForGain),
+              line: { color: "#0f1620", width: 1.5 },
+            },
+            text: pointLabels,
+            textposition: gains.map((gain) => (gain >= 0 ? "top center" : "bottom center")),
+            textfont: { size: 10, color: "#a8b4c3" },
+            hoverinfo: "skip",
+            showlegend: false,
           },
         ]}
         layout={{

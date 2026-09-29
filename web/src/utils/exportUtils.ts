@@ -43,81 +43,35 @@ export function downloadChart(chartId: string, format: "png" | "svg"): void {
   });
 }
 
-export type EqPresetFormat = "json" | "txt" | "csv" | "fabfilter" | "presonus";
+// Both FabFilter Pro-Q 3 (.fxp) and PreSonus Pro EQ (.preset) use closed,
+// undocumented binary preset formats:
+// - FabFilter Pro-Q 3 presets are raw VST ".fxp" chunks with no public spec.
+// - PreSonus Pro EQ presets use the ".preset" extension (confirmed against
+//   real Studio One preset files), but a ".preset" file is itself a ZIP
+//   archive containing "metainfo.xml" plus an opaque, compressed
+//   "data.fxpreset" binary blob with an undocumented, plugin-specific
+//   parameter layout — there is no official spec to safely reproduce it.
+// Fabricating either binary format would produce a file that either fails
+// to load or silently loads with wrong values, so instead we export a
+// plain-text, step-by-step reference listing each band's exact parameters
+// (Frequency, Gain, Q, filter type) in the order they need to be entered
+// manually into the plugin.
+export type EqPresetFormat = "fabfilter" | "presonus";
 
-const EQ_PRESET_FILE_INFO: Record<EqPresetFormat, { prefix: string; extension: string }> = {
-  json: { prefix: "eq-correction", extension: "json" },
-  txt: { prefix: "eq-correction", extension: "txt" },
-  csv: { prefix: "eq-correction", extension: "csv" },
-  fabfilter: { prefix: "eq-correction-fabfilter-pro-q3", extension: "txt" },
-  presonus: { prefix: "eq-correction-presonus-pro-eq", extension: "txt" },
+// Fixed filenames (no timestamp) as specified for these exports. Repeated
+// downloads of the same format will get "(1)", "(2)", etc. appended by the
+// browser, which is expected/acceptable here since each file's content is
+// re-derived from the current analysis at download time (see
+// downloadEqPreset below), not a versioned artifact that needs distinct
+// timestamped names to avoid data loss.
+const EQ_PRESET_FILE_INFO: Record<EqPresetFormat, string> = {
+  fabfilter: "eq-correction-fabfilter-instructions.txt",
+  presonus: "eq-correction-presonus.txt",
 };
 
-function eqPresetFilename(format: EqPresetFormat): string {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const { prefix, extension } = EQ_PRESET_FILE_INFO[format];
-  return `${prefix}-${timestamp}.${extension}`;
-}
-
-function buildEqPresetJson(bands: EqCorrectionBand[]): string {
-  const preset = {
-    name: "Audio Spectrum Comparator - EQ Correction",
-    generatedAt: new Date().toISOString(),
-    bands: bands.map((band, index) => ({
-      index,
-      name: band.name,
-      range: band.range,
-      frequency: band.center,
-      gainDb: Number(band.correctionDb.toFixed(2)),
-      q: band.q,
-      type: band.eqType,
-      bypass: band.bypass,
-      exceedsThreshold: band.exceedsThreshold,
-    })),
-  };
-  return JSON.stringify(preset, null, 2);
-}
-
-function buildEqPresetTxt(bands: EqCorrectionBand[]): string {
-  const lines = [
-    "Audio Spectrum Comparator - EQ Correction Preset",
-    `Generated: ${new Date().toISOString()}`,
-    "",
-    "Band | Frequency | Type | Gain | Q | Bypass",
-  ];
-  bands.forEach((band) => {
-    const gain = `${band.correctionDb >= 0 ? "+" : ""}${band.correctionDb.toFixed(2)} dB`;
-    lines.push(
-      `${band.name} (${band.range}) | ${band.center} Hz | ${band.eqType} | ${gain} | Q ${band.q} | ${band.bypass ? "Bypassed" : "Active"}`,
-    );
-  });
-  return lines.join("\r\n");
-}
-
-function buildEqPresetCsv(bands: EqCorrectionBand[]): string {
-  const rows = [
-    ["Band", "Range", "Frequency (Hz)", "Type", "Gain (dB)", "Q", "Bypass"],
-    ...bands.map((band) => [
-      band.name,
-      band.range,
-      String(band.center),
-      band.eqType,
-      band.correctionDb.toFixed(2),
-      String(band.q),
-      band.bypass ? "Bypassed" : "Active",
-    ]),
-  ];
-  return rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
-}
-
-// FabFilter Pro-Q 3 and PreSonus Pro EQ both use proprietary preset formats
-// that aren't publicly documented, so instead we generate a plain-text
-// reference listing each band's parameters (Frequency, Gain, Q, filter
-// type, Bypass) in the order they need to be entered per band, so the
-// preset can be recreated in the plugin in a couple of minutes.
 type VstPresetLabels = {
   title: string;
-  instructions: string;
+  copyNote: string;
   qLabel: string;
   typeLabel: string;
   typeNames: Record<EqType, string>;
@@ -134,7 +88,8 @@ function buildVstPreset(bands: EqCorrectionBand[], labels: VstPresetLabels): str
     "Audio Spectrum Comparator - EQ Correction",
     `Generated: ${new Date().toISOString()}`,
     "",
-    labels.instructions,
+    labels.copyNote,
+    `Format: Band N (name): Frequency Hz, Gain dB, ${labels.qLabel}: value (${labels.typeLabel}: type, ${labels.bypassLabel}: state)`,
     "",
   ];
   bands.forEach((band, index) => {
@@ -142,9 +97,8 @@ function buildVstPreset(bands: EqCorrectionBand[], labels: VstPresetLabels): str
     const warningText = formatExtremeWarning(band);
     const warning = warningText ? `  [!] ${warningText}` : "";
     lines.push(
-      `Band ${index + 1} (${band.name}): Frequency = ${band.center} Hz | Gain = ${gain} | ` +
-        `${labels.qLabel} = ${band.q.toFixed(2)} | ${labels.typeLabel} = ${labels.typeNames[band.eqType]} | ` +
-        `${labels.bypassLabel} = ${band.bypass ? labels.bypassedValue : labels.activeValue}${warning}`,
+      `Band ${index + 1} (${band.name}): ${band.center} Hz, ${gain}, ${labels.qLabel}: ${band.q.toFixed(2)} ` +
+        `(${labels.typeLabel}: ${labels.typeNames[band.eqType]}, ${labels.bypassLabel}: ${band.bypass ? labels.bypassedValue : labels.activeValue})${warning}`,
     );
   });
   return lines.join("\r\n");
@@ -166,9 +120,10 @@ const PRESONUS_TYPE_NAMES: Record<EqType, string> = {
 
 function buildFabFilterPreset(bands: EqCorrectionBand[]): string {
   return buildVstPreset(bands, {
-    title: "FabFilter Pro-Q 3 - Band Settings",
-    instructions:
-      "For each band below: add a band in Pro-Q 3, then set Frequency, Gain, Q and Shape to the values shown.",
+    title: "FabFilter Pro-Q 3 - Step-by-Step Band Settings",
+    copyNote:
+      "Copy these values into FabFilter Pro-Q 3 manually: for each band below, add a band in Pro-Q 3, " +
+      "then set Frequency, Gain, Q and Shape to the values shown.",
     qLabel: "Q",
     typeLabel: "Shape",
     typeNames: FABFILTER_TYPE_NAMES,
@@ -180,9 +135,10 @@ function buildFabFilterPreset(bands: EqCorrectionBand[]): string {
 
 function buildPresonusPreset(bands: EqCorrectionBand[]): string {
   return buildVstPreset(bands, {
-    title: "PreSonus Pro EQ - Band Settings",
-    instructions:
-      "For each band below: add/select a band in Pro EQ, then set Frequency, Gain, Bandwidth (Q) and Type to the values shown.",
+    title: "PreSonus Pro EQ - Step-by-Step Band Settings",
+    copyNote:
+      "Copy these values into PreSonus Pro EQ manually: for each band below, add/select a band in Pro EQ, " +
+      "then set Frequency, Gain, Bandwidth (Q) and Type to the values shown.",
     qLabel: "Bandwidth (Q)",
     typeLabel: "Type",
     typeNames: PRESONUS_TYPE_NAMES,
@@ -193,16 +149,7 @@ function buildPresonusPreset(bands: EqCorrectionBand[]): string {
 }
 
 export function downloadEqPreset(bands: EqCorrectionBand[], format: EqPresetFormat): void {
-  const filename = eqPresetFilename(format);
-  if (format === "json") {
-    triggerDownload(buildEqPresetJson(bands), filename, "application/json;charset=utf-8");
-  } else if (format === "txt") {
-    triggerDownload(buildEqPresetTxt(bands), filename, "text/plain;charset=utf-8");
-  } else if (format === "csv") {
-    triggerDownload(buildEqPresetCsv(bands), filename, "text/csv;charset=utf-8");
-  } else if (format === "fabfilter") {
-    triggerDownload(buildFabFilterPreset(bands), filename, "text/plain;charset=utf-8");
-  } else {
-    triggerDownload(buildPresonusPreset(bands), filename, "text/plain;charset=utf-8");
-  }
+  const filename = EQ_PRESET_FILE_INFO[format];
+  const content = format === "fabfilter" ? buildFabFilterPreset(bands) : buildPresonusPreset(bands);
+  triggerDownload(content, filename, "text/plain;charset=utf-8");
 }
