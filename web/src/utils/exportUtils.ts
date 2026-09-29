@@ -69,10 +69,6 @@ const EQ_PRESET_FILE_INFO: Record<EqPresetFormat, string> = {
   presonus: "eq-correction-presonus.txt",
 };
 
-function eqPresetFilename(format: EqPresetFormat): string {
-  return EQ_PRESET_FILE_INFO[format];
-}
-
 type VstPresetLabels = {
   title: string;
   copyNote: string;
@@ -153,7 +149,7 @@ function buildPresonusPreset(bands: EqCorrectionBand[]): string {
 }
 
 export function downloadEqPreset(bands: EqCorrectionBand[], format: EqPresetFormat): void {
-  const filename = eqPresetFilename(format);
+  const filename = EQ_PRESET_FILE_INFO[format];
   const content = format === "fabfilter" ? buildFabFilterPreset(bands) : buildPresonusPreset(bands);
   triggerDownload(content, filename, "text/plain;charset=utf-8");
 }

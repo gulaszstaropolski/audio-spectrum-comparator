@@ -24,14 +24,14 @@ export default function CorrectionChart({
   const CUSTOMDATA_Q = 1;
   const CUSTOMDATA_TYPE = 2;
   const CUSTOMDATA_STATE = 3;
-  const customdata = corrections.map((band) => {
-    const row: (number | string)[] = [];
-    row[CUSTOMDATA_FREQUENCY] = band.center;
-    row[CUSTOMDATA_Q] = band.q;
-    row[CUSTOMDATA_TYPE] = band.eqType;
-    row[CUSTOMDATA_STATE] = band.bypass ? "Bypassed" : "Active";
-    return row;
-  });
+  const CUSTOMDATA_RANGE = 4;
+  const customdata: (number | string)[][] = corrections.map((band) => [
+    band.center,
+    band.q,
+    band.eqType,
+    band.bypass ? "Bypassed" : "Active",
+    band.range,
+  ]);
   // Exact correction points (frequency + gain + Q), shown as markers on top
   // of the bars so the graph communicates the specific band settings that
   // will be entered in the EQ plugin, not just the "from-to" band range.
@@ -54,7 +54,7 @@ export default function CorrectionChart({
             cliponaxis: false,
             customdata,
             hovertemplate:
-              `<b>%{x}</b><br>Frequency: %{customdata[${CUSTOMDATA_FREQUENCY}]} Hz<br>Correction: %{y:+.2f} dB<br>` +
+              `<b>%{x}</b> (%{customdata[${CUSTOMDATA_RANGE}]})<br>Frequency: %{customdata[${CUSTOMDATA_FREQUENCY}]} Hz<br>Correction: %{y:+.2f} dB<br>` +
               `Q: %{customdata[${CUSTOMDATA_Q}]}<br>Type: %{customdata[${CUSTOMDATA_TYPE}]}<br>%{customdata[${CUSTOMDATA_STATE}]}<extra></extra>`,
           },
           {
