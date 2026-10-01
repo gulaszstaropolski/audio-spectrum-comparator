@@ -119,6 +119,35 @@ h1 span { color: var(--muted); }
 .value-cut { color: var(--red) !important; }
 .band-guidance-warning span { font-weight: 600; }
 .warning-message { margin: 10px 0 0; color: var(--red); font-size: 11px; }
+.standards-view { display: grid; gap: 25px; padding: 14px 0 4px; }
+.standards-section { min-width: 0; }
+.standards-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.standards-heading h3 { margin: 0; color: var(--text); font: 600 14px Manrope, "Segoe UI", sans-serif; }
+.standards-heading > span, .standards-legend { color: var(--muted); font-size: 10px; }
+.standards-legend { display: flex; flex-wrap: wrap; gap: 8px 17px; margin-bottom: 11px; }
+.standards-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; }
+.status-dot.compliant, .compliance-marker.compliant { background: var(--green); }
+.status-dot.exceeds, .compliance-marker.exceeds { background: var(--red); }
+.status-dot.unavailable, .compliance-marker.unavailable { background: var(--faint); }
+.tolerance-key { width: 20px; height: 8px; border-radius: 2px; background: #8997a844; }
+.standards-table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 7px; }
+.standards-table { min-width: 570px; }
+.standards-table th, .standards-table td { padding: 7px 11px; }
+.standards-table th:first-child, .standards-table td:first-child { width: 25%; }
+.standards-value.compliant { color: var(--green); }
+.standards-value.exceeds { color: var(--red); }
+.standards-value.unavailable { color: var(--faint); }
+.compliance-status { display: inline-block; min-width: 106px; text-align: left; }
+.compliance-status.compliant { color: var(--green); }
+.compliance-status.exceeds { color: var(--red); }
+.compliance-status.unavailable { color: var(--faint); }
+.compliance-track { position: relative; display: inline-block; width: 100px; height: 8px; margin-left: 9px; border-radius: 4px; background: linear-gradient(to right, transparent 0 37.5%, #8997a844 37.5% 62.5%, transparent 62.5% 100%); vertical-align: middle; }
+.compliance-marker { position: absolute; top: 0; width: 8px; height: 8px; transform: translateX(-50%); border-radius: 50%; }
+.loudness-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 9px; }
+.loudness-card { display: grid; gap: 7px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-raised); }
+.loudness-card span { color: var(--muted); font-size: 10px; }
+.loudness-card strong { color: var(--text); font: 600 16px Manrope, "Segoe UI", sans-serif; }
 .export-eq-preset { display: flex; align-items: center; gap: 8px; }
 .export-eq-preset .session-select { min-height: 32px; max-width: 160px; }
 .eq-preset-preview { flex-basis: 100%; margin-top: 12px; overflow-x: auto; }
