@@ -3,6 +3,7 @@ import AudioUpload from "./components/AudioUpload";
 import BandAnalysisChart from "./components/BandAnalysisChart";
 import CorrectionChart from "./components/CorrectionChart";
 import DataTable from "./components/DataTable";
+import EQCorrectionTab from "./components/EQCorrectionTab";
 import ExportOptions from "./components/ExportOptions";
 import HeatmapChart from "./components/HeatmapChart";
 import SpectrumChart from "./components/SpectrumChart";
@@ -17,7 +18,8 @@ const TABS = [
   { id: "heatmap", label: "Difference heatmap" },
   { id: "spectrum", label: "Spectrum overlay" },
   { id: "bands", label: "Frequency bands" },
-  { id: "correction", label: "EQ Correction" },
+  { id: "correction", label: "EQ Suggestions" },
+  { id: "eqCorrection", label: "EQ Correction" },
   { id: "compliance", label: "Spectrum Compliance" },
   { id: "data", label: "Data table" },
   { id: "standards", label: "Standards" },
@@ -289,6 +291,13 @@ export default function App() {
                     <span><i className="legend-dot cut" /> Cut</span>
                   </>
                 )}
+                {activeTab === "eqCorrection" && (
+                  <>
+                    <span><i className="legend-line blue" /> Reference</span>
+                    <span><i className="legend-line gray" /> Original mix</span>
+                    <span><i className="legend-line green" /> Corrected mix</span>
+                  </>
+                )}
                 {activeTab === "compliance" && (
                   <>
                     <span><i className="legend-dot red" /> Above limit</span>
@@ -309,6 +318,9 @@ export default function App() {
                 {activeTab === "bands" && <BandAnalysisChart analysis={analysis} />}
                 {activeTab === "correction" && (
                   <CorrectionChart corrections={eqCorrections} />
+                )}
+                {activeTab === "eqCorrection" && (
+                  <EQCorrectionTab analysis={analysis} mixFile={mixFile} />
                 )}
                 {activeTab === "compliance" && (
                   <SpectrumComplianceTab analysis={analysis} />
@@ -365,6 +377,13 @@ export default function App() {
                 <p className="chart-note">
                   Analyze your mix against industry standards (Streaming, Radio, TV). Green area = compliant,
                   Red/Blue areas = violations. Choose a standard or customize limits per band.
+                </p>
+              )}
+              {activeTab === "eqCorrection" && (
+                <p className="chart-note">
+                  Drag the vertical sliders (or type exact dB values) to shape a 31-band correction and watch the
+                  green "Corrected mix" curve move toward the blue reference. Use the A/B switch and Play preview
+                  to hear the change live, then Reset to start over.
                 </p>
               )}
               <ExportOptions analysis={analysis} activeTab={activeTab} />
