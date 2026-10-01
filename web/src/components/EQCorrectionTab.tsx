@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Plot from "./Plot";
 import type { AnalysisResult } from "../types/audio";
 import {
@@ -32,6 +32,14 @@ export default function EQCorrectionTab({
   const filtersRef = useRef<BiquadFilterNode[] | null>(null);
 
   const previewSupported = typeof AudioContext !== "undefined";
+
+  // Firefox only renders a native vertical slider track when the
+  // non-standard `orient="vertical"` attribute is set (unlike
+  // Chrome/Safari, which use `-webkit-appearance: slider-vertical` in CSS);
+  // React doesn't type this attribute, so it's applied imperatively here.
+  const setVerticalOrient = useCallback((element: HTMLInputElement | null) => {
+    element?.setAttribute("orient", "vertical");
+  }, []);
 
   function ensureContext(): AudioContext {
     if (!audioContextRef.current) {
@@ -288,6 +296,7 @@ export default function EQCorrectionTab({
               <div className="eq-slider-track">
                 <input
                   type="range"
+                  ref={setVerticalOrient}
                   min={-EQ_31_MAX_GAIN_DB}
                   max={EQ_31_MAX_GAIN_DB}
                   step={0.1}
