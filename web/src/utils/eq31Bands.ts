@@ -112,10 +112,11 @@ export function applyEq31Correction(
   gains: number[],
   sampleRate: number,
 ): number[] {
-  const activeBands = EQ_31_CENTER_FREQUENCIES.map((center, index) => ({
-    center,
-    gainDb: gains[index] ?? 0,
-  })).filter((band) => band.gainDb !== 0);
+  const activeBands: { center: number; gainDb: number }[] = [];
+  for (let index = 0; index < EQ_31_CENTER_FREQUENCIES.length; index += 1) {
+    const gainDb = gains[index] ?? 0;
+    if (gainDb !== 0) activeBands.push({ center: EQ_31_CENTER_FREQUENCIES[index], gainDb });
+  }
 
   if (!activeBands.length) return spectrumDb.slice();
 

@@ -115,7 +115,10 @@ export default function EQCorrectionTab({
   }, []);
 
   // Keep the live filter chain in sync with the sliders and A/B switch so
-  // changes are heard immediately, even while audio is already playing.
+  // changes are heard immediately, even while audio is already playing. The
+  // filter chain is only created lazily on first play (see `togglePlayback`),
+  // so before that this is a no-op; `togglePlayback` applies the current
+  // gains/A-B mode itself when it creates the chain, so nothing is missed.
   useEffect(() => {
     const filters = filtersRef.current;
     if (!filters) return;
