@@ -1,3 +1,5 @@
+import type { ComplianceResult } from "../utils/spectrumCompliance";
+
 export type EqType = "Peaking" | "LowShelf" | "HighShelf" | "Notch";
 
 export type FrequencyBand = {
@@ -37,6 +39,7 @@ export type AnalysisResult = {
   sampleRate: number;
   duration: number;
   normalizationGainDb: number;
+  compliance?: ComplianceResult;
 };
 
 export type SavedSession = {

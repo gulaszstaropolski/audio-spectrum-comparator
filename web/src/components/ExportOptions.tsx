@@ -13,7 +13,7 @@ export default function ExportOptions({
   activeTab,
 }: {
   analysis: AnalysisResult;
-  activeTab: "heatmap" | "spectrum" | "bands" | "correction" | "data" | "standards";
+  activeTab: "heatmap" | "spectrum" | "bands" | "correction" | "data" | "standards" | "compliance";
 }) {
   const [eqFormat, setEqFormat] = useState<EqPresetFormat>("fabfilter");
   const [showPreview, setShowPreview] = useState(false);
@@ -98,7 +98,7 @@ export default function ExportOptions({
           </table>
         </div>
       )}
-      {activeTab !== "data" && activeTab !== "correction" && activeTab !== "standards" && (
+      {activeTab !== "data" && activeTab !== "correction" && activeTab !== "standards" && activeTab !== "compliance" && (
         <div className="export-chart">
           <span>Current chart</span>
           <span className="chart-export-pair">
