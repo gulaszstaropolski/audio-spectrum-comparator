@@ -103,13 +103,28 @@ export function totalEq31CorrectionDb(
 
 // Applies the 31-band correction curve on top of an existing dB spectrum,
 // returning a new array the same length as `spectrumDb`/`frequencies`.
+// Bands left at 0 dB are filtered out once up front (instead of re-checking
+// per frequency bin inside the hot loop), since most sliders are usually
+// untouched and spectra/frequency arrays can have thousands of bins.
 export function applyEq31Correction(
   frequencies: number[],
   spectrumDb: number[],
   gains: number[],
   sampleRate: number,
 ): number[] {
-  return spectrumDb.map((value, index) =>
-    value + totalEq31CorrectionDb(frequencies[index], gains, sampleRate),
-  );
+  const activeBands = EQ_31_CENTER_FREQUENCIES.map((center, index) => ({
+    center,
+    gainDb: gains[index] ?? 0,
+  })).filter((band) => band.gainDb !== 0);
+
+  if (!activeBands.length) return spectrumDb.slice();
+
+  return spectrumDb.map((value, index) => {
+    const frequency = frequencies[index];
+    let correction = 0;
+    for (const band of activeBands) {
+      correction += peakingResponseDb(frequency, band.center, band.gainDb, EQ_31_BAND_Q, sampleRate);
+    }
+    return value + correction;
+  });
 }
