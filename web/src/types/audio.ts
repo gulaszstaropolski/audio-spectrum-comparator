@@ -25,6 +25,40 @@ export type EqCorrectionBand = {
   exceedsThreshold: boolean;
 };
 
+export type ComplianceNorm = {
+  lowerDb: number;
+  upperDb: number;
+};
+
+export type ComplianceNorms = Record<string, ComplianceNorm>;
+
+export type ComplianceStandard = "Streaming" | "Radio" | "TV/Broadcast" | "Custom";
+
+export type ComplianceBandResult = {
+  id: string;
+  name: string;
+  range: string;
+  differenceDb: number;
+  lowerDb: number;
+  upperDb: number;
+  status: "within" | "above" | "below";
+};
+
+export type ComplianceViolation = {
+  band: string;
+  range: string;
+  differenceDb: number;
+  limitDb: number;
+  direction: "above" | "below";
+  amountDb: number;
+};
+
+export type ComplianceResult = {
+  standard: ComplianceStandard;
+  bands: ComplianceBandResult[];
+  violations: ComplianceViolation[];
+};
+
 export type AnalysisResult = {
   frequencies: number[];
   referenceSpectrum: number[];
@@ -37,6 +71,7 @@ export type AnalysisResult = {
   sampleRate: number;
   duration: number;
   normalizationGainDb: number;
+  compliance?: ComplianceResult;
 };
 
 export type SavedSession = {

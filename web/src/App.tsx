@@ -6,9 +6,11 @@ import DataTable from "./components/DataTable";
 import ExportOptions from "./components/ExportOptions";
 import HeatmapChart from "./components/HeatmapChart";
 import SpectrumChart from "./components/SpectrumChart";
-import type { AnalysisResult, SavedSession } from "./types/audio";
+import SpectrumComplianceTab from "./components/SpectrumComplianceTab";
+import type { AnalysisResult, ComplianceNorms, ComplianceStandard, SavedSession } from "./types/audio";
 import { analyzeAudio } from "./utils/audioProcessor";
 import { EXTREME_CORRECTION_DB, calculateEqCorrections, formatExtremeWarning } from "./utils/frequencyBands";
+import { COMPLIANCE_BANDS, COMPLIANCE_STANDARDS } from "./utils/spectrumCompliance";
 
 const STORAGE_KEY = "audio-spectrum-comparator.sessions";
 const TABS = [
@@ -16,6 +18,7 @@ const TABS = [
   { id: "spectrum", label: "Spectrum overlay" },
   { id: "bands", label: "Frequency bands" },
   { id: "correction", label: "EQ Correction" },
+  { id: "compliance", label: "Spectrum Compliance" },
   { id: "data", label: "Data table" },
 ] as const;
 
@@ -42,6 +45,15 @@ export default function App() {
   const [sessions, setSessions] = useState<SavedSession[]>(readSessions);
   const [sessionId, setSessionId] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("heatmap");
+  const [complianceStandard, setComplianceStandard] = useState<ComplianceStandard>("Streaming");
+  const [customComplianceNorms, setCustomComplianceNorms] = useState<ComplianceNorms>(() =>
+    Object.fromEntries(
+      COMPLIANCE_BANDS.map((band) => [
+        band.id,
+        { ...COMPLIANCE_STANDARDS.Streaming[band.id] },
+      ]),
+    ),
+  );
   const [normalization, setNormalization] = useState(true);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [progress, setProgress] = useState(0);
@@ -285,6 +297,14 @@ export default function App() {
                     <span><i className="legend-dot cut" /> Cut</span>
                   </>
                 )}
+                {activeTab === "compliance" && (
+                  <>
+                    <span><i className="legend-dot red" /> Above limit</span>
+                    <span><i className="legend-dot blue" /> Below limit</span>
+                    <span><i className="legend-dot boost" /> Within limits</span>
+                    <span>Gray band = allowed range</span>
+                  </>
+                )}
                 {activeTab === "data" && (
                   <span>Showing all {analysis.frequencies.length.toLocaleString()} frequency bins</span>
                 )}
@@ -296,6 +316,15 @@ export default function App() {
                 {activeTab === "correction" && (
                   <CorrectionChart corrections={eqCorrections} />
                 )}
+                {activeTab === "compliance" && (
+                  <SpectrumComplianceTab
+                    analysis={analysis}
+                    standard={complianceStandard}
+                    setStandard={setComplianceStandard}
+                    customNorms={customComplianceNorms}
+                    setCustomNorms={setCustomComplianceNorms}
+                  />
+                )}
                 {activeTab === "data" && <DataTable analysis={analysis} />}
               </div>
               {activeTab === "heatmap" && (
@@ -303,6 +332,9 @@ export default function App() {
               )}
               {activeTab === "spectrum" && (
                 <p className="chart-note">The curves show average level by frequency. A higher mix curve means that frequency range is more prominent in your mix.</p>
+              )}
+              {activeTab === "compliance" && (
+                <p className="chart-note">Results show the mix’s average level difference from the reference in ten octave bands. Tolerance profiles are practical tonal-balance guides, not formal platform or broadcast certification limits.</p>
               )}
               {activeTab === "bands" && (
                 <div className="band-guidance">

@@ -13,7 +13,7 @@ export default function ExportOptions({
   activeTab,
 }: {
   analysis: AnalysisResult;
-  activeTab: "heatmap" | "spectrum" | "bands" | "correction" | "data";
+  activeTab: "heatmap" | "spectrum" | "bands" | "correction" | "compliance" | "data";
 }) {
   const [eqFormat, setEqFormat] = useState<EqPresetFormat>("fabfilter");
   const [showPreview, setShowPreview] = useState(false);
@@ -22,6 +22,7 @@ export default function ExportOptions({
     spectrum: "spectrum-chart",
     bands: "band-chart",
     correction: "correction-chart",
+    compliance: "compliance-chart",
   } as const;
   const eqCorrections = useMemo(
     () => calculateEqCorrections(analysis.bands),
