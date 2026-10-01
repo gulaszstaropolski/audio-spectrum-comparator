@@ -182,6 +182,15 @@ tbody tr:hover { background: var(--surface-raised); }
 .ab-switch-option.active { background: var(--accent-strong); color: white; }
 .eq-preview-controls { display: inline-flex; align-items: center; gap: 10px; }
 .eq-preview-status { color: var(--faint); font: 11px "DM Mono", monospace; }
+.eq-master-slider { display: grid; gap: 10px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 10px; background: var(--input-bg); }
+.eq-master-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.eq-master-title { color: var(--text); font-weight: 600; font-size: 13px; }
+.eq-master-lock { color: var(--faint); font: 10px "DM Mono", monospace; text-transform: uppercase; letter-spacing: 0.04em; transition: color 0.15s ease; }
+.eq-master-lock.locked { color: var(--green); }
+.eq-master-lock.unlocked { color: var(--muted); }
+.eq-master-controls { display: flex; align-items: center; gap: 14px; }
+.eq-master-range { flex: 1; height: 10px; margin: 0; accent-color: var(--accent-strong); transition: filter 0.15s ease; }
+.eq-master-value { min-width: 48px; color: var(--text); font: 600 16px "DM Mono", monospace; text-align: right; }
 .eq-slider-rack { display: flex; gap: 6px; padding: 16px 8px 6px; overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--input-bg); }
 .eq-slider-band { display: grid; flex: 0 0 auto; justify-items: center; gap: 6px; width: 34px; }
 .eq-slider-value { color: var(--muted); font: 10px "DM Mono", monospace; }
@@ -196,6 +205,7 @@ tbody tr:hover { background: var(--surface-raised); }
   direction: rtl;
   accent-color: var(--accent-strong);
   background: transparent;
+  transition: accent-color 0.15s ease;
 }
 .eq-slider-input { width: 44px; min-height: 24px; padding: 2px 4px; border: 1px solid var(--border); border-radius: 5px; color: var(--text); background: var(--surface); font-size: 10px; text-align: center; }
 .eq-slider-label { color: var(--faint); font: 10px "DM Mono", monospace; white-space: nowrap; }

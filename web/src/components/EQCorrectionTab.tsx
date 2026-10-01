@@ -6,6 +6,7 @@ import {
   EQ_31_CENTER_FREQUENCIES,
   EQ_31_MAX_GAIN_DB,
   applyEq31Correction,
+  calculateIdealEq31Gains,
   clampEq31Gain,
   createDefaultEq31Gains,
   formatEq31Label,
@@ -25,6 +26,13 @@ export default function EQCorrectionTab({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDecoding, setIsDecoding] = useState(false);
   const [previewError, setPreviewError] = useState("");
+  // 0-100%: how far the 31 sliders are pulled toward the ideal correction
+  // (see `idealGains` below). "Locked" means every slider still matches what
+  // the Master Slider would set at its current percentage; manually moving
+  // any single slider unlocks it (the percentage stays put, but future
+  // Master Slider moves overwrite that manual tweak again).
+  const [masterPercent, setMasterPercent] = useState(0);
+  const [isMasterLocked, setIsMasterLocked] = useState(true);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const bufferRef = useRef<AudioBuffer | null>(null);
@@ -170,11 +178,39 @@ export default function EQCorrectionTab({
       next[index] = clampEq31Gain(value);
       return next;
     });
+    // A manual tweak to a single band means the rack no longer exactly
+    // reflects the Master Slider's percentage.
+    setIsMasterLocked(false);
   }
 
   function resetGains() {
     setGains(createDefaultEq31Gains());
+    setMasterPercent(0);
+    setIsMasterLocked(true);
   }
+
+  // Ideal correction for each band (reference − mix), i.e. what the Master
+  // Slider dials in at 100%.
+  const idealGains = useMemo(
+    () => calculateIdealEq31Gains(analysis.frequencies, analysis.mixSpectrum, analysis.referenceSpectrum),
+    [analysis.frequencies, analysis.mixSpectrum, analysis.referenceSpectrum],
+  );
+
+  function applyMasterPercent(percent: number) {
+    const clampedPercent = Math.min(100, Math.max(0, percent));
+    setMasterPercent(clampedPercent);
+    setGains(idealGains.map((gain) => clampEq31Gain((gain * clampedPercent) / 100)));
+    setIsMasterLocked(true);
+  }
+
+  // Keep the rack in sync with the Master Slider when the ideal correction
+  // itself changes (e.g. a new mix/reference analysis), as long as no band
+  // has been manually unlocked in the meantime.
+  useEffect(() => {
+    if (!isMasterLocked) return;
+    setGains(idealGains.map((gain) => clampEq31Gain((gain * masterPercent) / 100)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idealGains]);
 
   const correctedSpectrum = useMemo(
     () => applyEq31Correction(analysis.frequencies, analysis.mixSpectrum, gains, analysis.sampleRate),
@@ -283,6 +319,43 @@ export default function EQCorrectionTab({
         </button>
       </div>
       {previewError && <p className="error-message" role="alert">{previewError}</p>}
+
+      <div className="eq-master-slider" role="group" aria-label="Master Auto-EQ correction">
+        <div className="eq-master-header">
+          <span className="eq-master-title">Master Slider · Auto-EQ</span>
+          <span
+            className={`eq-master-lock ${isMasterLocked ? "locked" : "unlocked"}`}
+            title={
+              isMasterLocked
+                ? "All 31 bands match the Master Slider"
+                : "A band was adjusted manually — Master Slider is unlocked"
+            }
+          >
+            {isMasterLocked ? "🔒 Locked" : "🔓 Unlocked"}
+          </span>
+        </div>
+        <div className="eq-master-controls">
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={masterPercent}
+            onChange={(event) => applyMasterPercent(Number(event.target.value))}
+            className="eq-master-range"
+            aria-label="Master Auto-EQ correction percentage"
+          />
+          <span className="eq-master-value">{Math.round(masterPercent)}%</span>
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => applyMasterPercent(0)}
+            disabled={masterPercent === 0 && isMasterLocked}
+          >
+            Reset
+          </button>
+        </div>
+      </div>
 
       <div className="eq-slider-rack" role="group" aria-label="31-band EQ correction">
         {EQ_31_CENTER_FREQUENCIES.map((frequency, index) => {

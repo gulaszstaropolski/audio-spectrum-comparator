@@ -101,6 +101,55 @@ export function totalEq31CorrectionDb(
   return total;
 }
 
+// Half-width (in octaves) of a 1/3-octave band, used to derive each band's
+// low/high edges from its ISO center frequency: center * 2^(±1/6).
+const EQ_31_BAND_EDGE_RATIO = Math.pow(2, 1 / 6);
+
+// Ideal per-band correction (in dB) to bring the mix spectrum fully in line
+// with the reference spectrum — i.e. the gain each of the 31 sliders would
+// need at 100% on the Master Slider. For each band, averages
+// `referenceSpectrum - mixSpectrum` (mirroring `calculateEqCorrections`'s
+// reference-minus-mix convention) over the bins within that band's
+// 1/3-octave edges, falling back to the single closest bin when a band has
+// no bins of its own (can happen for the outermost bands on a coarse FFT).
+// Results are clamped to the slider range so Master Slider math and manual
+// sliders always agree on what's achievable.
+export function calculateIdealEq31Gains(
+  frequencies: number[],
+  mixSpectrum: number[],
+  referenceSpectrum: number[],
+): number[] {
+  return EQ_31_CENTER_FREQUENCIES.map((center) => {
+    const low = center / EQ_31_BAND_EDGE_RATIO;
+    const high = center * EQ_31_BAND_EDGE_RATIO;
+    let sum = 0;
+    let count = 0;
+    let closestIndex = -1;
+    let closestDistance = Infinity;
+
+    for (let index = 0; index < frequencies.length; index += 1) {
+      const frequency = frequencies[index];
+      const distance = Math.abs(frequency - center);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+      if (frequency >= low && frequency < high) {
+        sum += referenceSpectrum[index] - mixSpectrum[index];
+        count += 1;
+      }
+    }
+
+    const averageDb =
+      count > 0
+        ? sum / count
+        : closestIndex >= 0
+          ? referenceSpectrum[closestIndex] - mixSpectrum[closestIndex]
+          : 0;
+    return clampEq31Gain(averageDb);
+  });
+}
+
 // Applies the 31-band correction curve on top of an existing dB spectrum,
 // returning a new array the same length as `spectrumDb`/`frequencies`.
 // Bands left at 0 dB are filtered out once up front (instead of re-checking
