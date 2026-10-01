@@ -6,6 +6,7 @@ import DataTable from "./components/DataTable";
 import ExportOptions from "./components/ExportOptions";
 import HeatmapChart from "./components/HeatmapChart";
 import SpectrumChart from "./components/SpectrumChart";
+import StandardsChart from "./components/StandardsChart";
 import type { AnalysisResult, SavedSession } from "./types/audio";
 import { analyzeAudio } from "./utils/audioProcessor";
 import { EXTREME_CORRECTION_DB, calculateEqCorrections, formatExtremeWarning } from "./utils/frequencyBands";
@@ -17,6 +18,7 @@ const TABS = [
   { id: "bands", label: "Frequency bands" },
   { id: "correction", label: "EQ Correction" },
   { id: "data", label: "Data table" },
+  { id: "standards", label: "Standards" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -288,6 +290,9 @@ export default function App() {
                 {activeTab === "data" && (
                   <span>Showing all {analysis.frequencies.length.toLocaleString()} frequency bins</span>
                 )}
+                {activeTab === "standards" && (
+                  <span>ISO octave-band comparison and loudness targets</span>
+                )}
               </div>
               <div className="chart-content" role="tabpanel">
                 {activeTab === "heatmap" && <HeatmapChart analysis={analysis} />}
@@ -297,6 +302,7 @@ export default function App() {
                   <CorrectionChart corrections={eqCorrections} />
                 )}
                 {activeTab === "data" && <DataTable analysis={analysis} />}
+                {activeTab === "standards" && <StandardsChart analysis={analysis} />}
               </div>
               {activeTab === "heatmap" && (
                 <p className="chart-note">Red areas indicate frequencies where the mix is louder; blue areas are quieter. Use the time axis to locate when the difference occurs.</p>
