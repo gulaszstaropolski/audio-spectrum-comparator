@@ -205,7 +205,12 @@ export default function EQCorrectionTab({
 
   // Keep the rack in sync with the Master Slider when the ideal correction
   // itself changes (e.g. a new mix/reference analysis), as long as no band
-  // has been manually unlocked in the meantime.
+  // has been manually unlocked in the meantime. `masterPercent`/
+  // `isMasterLocked` are intentionally excluded from the dependency array:
+  // this effect should only re-run when `idealGains` changes, reading the
+  // latest `masterPercent`/`isMasterLocked` at that time — including them
+  // would also re-run it on every Master Slider drag or manual-unlock,
+  // which `applyMasterPercent`/`updateGain` already handle directly.
   useEffect(() => {
     if (!isMasterLocked) return;
     setGains(idealGains.map((gain) => clampEq31Gain((gain * masterPercent) / 100)));
