@@ -101,6 +101,80 @@ export function totalEq31CorrectionDb(
   return total;
 }
 
+// Half-width (in octaves) of a 1/3-octave band, used to derive each band's
+// low/high edges from its ISO center frequency: center * 2^(±1/6).
+const EQ_31_BAND_EDGE_RATIO = Math.pow(2, 1 / 6);
+
+// Ideal per-band correction (in dB) to bring the mix spectrum fully in line
+// with the reference spectrum — i.e. the gain each of the 31 sliders would
+// need at 100% on the Master Slider. For each band, averages
+// `referenceSpectrum - mixSpectrum` (mirroring `calculateEqCorrections`'s
+// reference-minus-mix convention) over the bins within that band's
+// 1/3-octave edges, falling back to the single closest bin when a band has
+// no bins of its own (can happen for the outermost bands on a coarse FFT).
+// Results are clamped to the slider range so Master Slider math and manual
+// sliders always agree on what's achievable.
+//
+// `frequencies` is a monotonically increasing spectrum axis and
+// `EQ_31_CENTER_FREQUENCIES` is sorted ascending too, so a single pass over
+// `frequencies` (tracking a sliding low/high window per band) is enough —
+// O(N + bands) instead of re-scanning the whole spectrum for every band.
+export function calculateIdealEq31Gains(
+  frequencies: number[],
+  mixSpectrum: number[],
+  referenceSpectrum: number[],
+): number[] {
+  const gains = new Array<number>(EQ_31_CENTER_FREQUENCIES.length).fill(0);
+  let index = 0;
+
+  for (let bandIndex = 0; bandIndex < EQ_31_CENTER_FREQUENCIES.length; bandIndex += 1) {
+    const center = EQ_31_CENTER_FREQUENCIES[bandIndex];
+    const low = center / EQ_31_BAND_EDGE_RATIO;
+    const high = center * EQ_31_BAND_EDGE_RATIO;
+    let sum = 0;
+    let count = 0;
+    let closestIndex = -1;
+    let closestDistance = Infinity;
+
+    // Skip forward past any bins before this band's edges (safe to do
+    // permanently since both frequencies and band centers only increase).
+    while (index < frequencies.length && frequencies[index] < low) {
+      index += 1;
+    }
+
+    let scanIndex = index;
+    while (scanIndex < frequencies.length && frequencies[scanIndex] < high) {
+      sum += referenceSpectrum[scanIndex] - mixSpectrum[scanIndex];
+      count += 1;
+      scanIndex += 1;
+    }
+
+    if (count === 0) {
+      // No bins fell within this band's edges (common for the outermost
+      // bands on a coarse FFT): `index` is the first bin at/after `low`, so
+      // the closest candidates are that bin and the one just before it.
+      for (const probe of [index - 1, index]) {
+        if (probe < 0 || probe >= frequencies.length) continue;
+        const distance = Math.abs(frequencies[probe] - center);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = probe;
+        }
+      }
+    }
+
+    const averageDb =
+      count > 0
+        ? sum / count
+        : closestIndex >= 0
+          ? referenceSpectrum[closestIndex] - mixSpectrum[closestIndex]
+          : 0;
+    gains[bandIndex] = clampEq31Gain(averageDb);
+  }
+
+  return gains;
+}
+
 // Applies the 31-band correction curve on top of an existing dB spectrum,
 // returning a new array the same length as `spectrumDb`/`frequencies`.
 // Bands left at 0 dB are filtered out once up front (instead of re-checking
