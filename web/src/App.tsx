@@ -6,6 +6,7 @@ import DataTable from "./components/DataTable";
 import ExportOptions from "./components/ExportOptions";
 import HeatmapChart from "./components/HeatmapChart";
 import SpectrumChart from "./components/SpectrumChart";
+import SpectrumComplianceTab from "./components/SpectrumComplianceTab";
 import type { AnalysisResult, SavedSession } from "./types/audio";
 import { analyzeAudio } from "./utils/audioProcessor";
 import { EXTREME_CORRECTION_DB, calculateEqCorrections, formatExtremeWarning } from "./utils/frequencyBands";
@@ -16,6 +17,7 @@ const TABS = [
   { id: "spectrum", label: "Spectrum overlay" },
   { id: "bands", label: "Frequency bands" },
   { id: "correction", label: "EQ Correction" },
+  { id: "compliance", label: "Spectrum Compliance" },
   { id: "data", label: "Data table" },
 ] as const;
 
@@ -285,6 +287,13 @@ export default function App() {
                     <span><i className="legend-dot cut" /> Cut</span>
                   </>
                 )}
+                {activeTab === "compliance" && (
+                  <>
+                    <span><i className="legend-dot red" /> Above limit</span>
+                    <span><i className="legend-dot blue" /> Below limit</span>
+                    <span><i className="legend-dot gray" /> In spec</span>
+                  </>
+                )}
                 {activeTab === "data" && (
                   <span>Showing all {analysis.frequencies.length.toLocaleString()} frequency bins</span>
                 )}
@@ -295,6 +304,9 @@ export default function App() {
                 {activeTab === "bands" && <BandAnalysisChart analysis={analysis} />}
                 {activeTab === "correction" && (
                   <CorrectionChart corrections={eqCorrections} />
+                )}
+                {activeTab === "compliance" && (
+                  <SpectrumComplianceTab analysis={analysis} />
                 )}
                 {activeTab === "data" && <DataTable analysis={analysis} />}
               </div>
@@ -342,6 +354,12 @@ export default function App() {
                     ))}
                   </div>
                 </>
+              )}
+              {activeTab === "compliance" && (
+                <p className="chart-note">
+                  Analyze your mix against industry standards (Streaming, Radio, TV). Green area = compliant,
+                  Red/Blue areas = violations. Choose a standard or customize limits per band.
+                </p>
               )}
               <ExportOptions analysis={analysis} activeTab={activeTab} />
             </div>
