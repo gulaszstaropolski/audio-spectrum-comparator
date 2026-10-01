@@ -140,7 +140,11 @@ export default function EQCorrectionTab({
       const source = context.createBufferSource();
       source.buffer = bufferRef.current;
       source.connect(filters[0]);
-      source.onended = () => setIsPlaying(false);
+      source.onended = () => {
+        source.disconnect();
+        if (sourceRef.current === source) sourceRef.current = null;
+        setIsPlaying(false);
+      };
       source.start();
       sourceRef.current = source;
       setIsPlaying(true);
