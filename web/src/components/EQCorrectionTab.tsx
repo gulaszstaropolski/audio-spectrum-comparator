@@ -170,6 +170,8 @@ export default function EQCorrectionTab({
   return (
     <div className="eq-correction">
       <div className="chart-frame" id="eq-correction-chart">
+        {/* Line colors mirror the legend classes in styles.css
+            (.legend-line.blue/.gray/.green) — keep both in sync if changed. */}
         <Plot
           data={[
             {
